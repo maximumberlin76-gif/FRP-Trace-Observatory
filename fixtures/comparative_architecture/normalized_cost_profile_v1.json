@@ -1,0 +1,21 @@
+{
+  "schema": "frp.benchmark.normalized_cost_profile.v1",
+  "suite_name": "FRP Comparative Architecture Benchmark Suite",
+  "profile_name": "unit_event_cost_v1",
+  "cost_unit": "normalized_activity_unit",
+  "costs": {
+    "encoded_bit_toggle": 1.0,
+    "clocked_state_bit": 1.0,
+    "register_write_bit": 1.0,
+    "comparison_event": 1.0,
+    "control_event": 1.0,
+    "queue_read": 1.0,
+    "queue_write": 1.0,
+    "lut_read_32": 1.0,
+    "fixed_point_multiply_32x32": 1.0,
+    "fixed_point_accumulate_64": 1.0,
+    "fixed_point_add_32": 1.0,
+    "fixed_point_compare_32": 1.0
+  },
+  "cost_profile_sha256": "4c4a470150ecc182c9a51eaefc0bcba0353e71160d16c6c6afd28a39c23b05bc"
+}
