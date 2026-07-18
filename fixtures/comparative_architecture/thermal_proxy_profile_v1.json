@@ -1,0 +1,11 @@
+{
+  "schema": "frp.benchmark.thermal_proxy_profile.v1",
+  "suite_name": "FRP Comparative Architecture Benchmark Suite",
+  "profile_name": "common_rc_thermal_proxy_v1",
+  "temperature_unit": "normalized_temperature_proxy",
+  "ambient_temperature_proxy": 0.0,
+  "thermal_decay": 0.95,
+  "thermal_gain": 0.01,
+  "update_equation": "ambient + (temperature - ambient) * thermal_decay + normalized_cycle_cost * thermal_gain",
+  "thermal_profile_sha256": "8cc2992f5699c47c88e81c17a4a5f0c8ff5bb7a5b32ebf73ab0e5a0f9c5494c8"
+}
