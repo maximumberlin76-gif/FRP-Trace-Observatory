@@ -1,0 +1,8 @@
+{
+  "num_cells": 16,
+  "command_count": 256,
+  "seed": 76,
+  "issue_policy": "transaction_serial",
+  "max_completion_cycles_per_command": 64,
+  "final_cooldown_cycles": 32
+}
