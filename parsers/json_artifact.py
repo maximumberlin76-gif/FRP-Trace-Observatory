@@ -246,7 +246,7 @@ class ParsedJsonArtifact:
 
         return self.source_artifact.content_sha256
 
-  def parse_json_artifact(source: SourceArtifact) -> ParsedJsonArtifact:
+def parse_json_artifact(source: SourceArtifact) -> ParsedJsonArtifact:
     """Decode one captured JSON artifact without executing its content."""
 
     if not isinstance(source, SourceArtifact):
