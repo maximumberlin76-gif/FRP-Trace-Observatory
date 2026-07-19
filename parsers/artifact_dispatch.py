@@ -211,8 +211,7 @@ class RegistrationResult:
             raise ArtifactDispatchError(
                 "registered results must not contain expected_kinds"
             )
-
-      @dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True)
 class DispatchedArtifact:
     """One immutable classification linked to unchanged source bytes."""
 
