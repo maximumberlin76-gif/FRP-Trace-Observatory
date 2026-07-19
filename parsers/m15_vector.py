@@ -333,7 +333,7 @@ class M15VectorRow:
         if any(not isinstance(field, str) for field in self.fields):
             raise M15VectorError("row fields must contain strings")
 
-  @dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True)
 class M15VectorArtifact:
     """Immutable parsed view linked to one unchanged vector source."""
 
