@@ -251,8 +251,7 @@ class SourceArtifact:
         """Recalculate the raw-byte digest without modifying the source."""
 
         return sha256(self.raw_bytes).hexdigest() == self.content_sha256
-
-  def capture_source_bytes(
+def capture_source_bytes(
     raw_bytes: bytes | bytearray | memoryview,
     *,
     source_filename: str,
