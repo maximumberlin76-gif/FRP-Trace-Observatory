@@ -136,8 +136,7 @@ def _validate_repository_path(
         raise RegistryError(
             f"{field_name} must not contain empty or traversal segments"
         )
-
-  @dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True)
 class CompatibilityRecord:
     """One exact upstream identifier and Observatory routing contract."""
 
