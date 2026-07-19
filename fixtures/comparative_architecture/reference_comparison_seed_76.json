@@ -99,8 +99,7 @@
       },
       "workload_sha256": "8386174d0a4751af26cc68bf46a5494cf0e58a3c14fc59ff46830a21645f0562"
     },
-
-      {
+    {
       "architecture_id": "binary_clock_gated_reference",
       "architecture_name": "Binary Clock-Gated Reference",
       "architecture_result_sha256": "6ce1f829f80f0b4538b22e8097be48a449fc02edf12fb7bf4ff56b8f43d3b8a7",
@@ -195,8 +194,7 @@
       },
       "workload_sha256": "8386174d0a4751af26cc68bf46a5494cf0e58a3c14fc59ff46830a21645f0562"
     },
-
-        {
+    {
       "architecture_id": "direct_ternary_reference",
       "architecture_name": "Direct Ternary Reference",
       "architecture_result_sha256": "ecb11a545f397db89af820090ea1b471bdb22ed331260fce4ed029171a77189f",
@@ -291,8 +289,7 @@
       },
       "workload_sha256": "8386174d0a4751af26cc68bf46a5494cf0e58a3c14fc59ff46830a21645f0562"
     },
-
-        {
+    {
       "architecture_id": "frp_v1_7_0_quantized_shadow",
       "architecture_name": "FRP v1.7.0 Quantized Hardware Shadow Reference",
       "architecture_result_sha256": "9a057944f9cfabdecbbd490bed62fa6e8facd4238a24491edf61db6b03e4378d",
@@ -403,8 +400,7 @@
       "workload_sha256": "8386174d0a4751af26cc68bf46a5494cf0e58a3c14fc59ff46830a21645f0562"
     }
   ],
-
-    "benchmark_kind": "comparative_architecture_matrix",
+  "benchmark_kind": "comparative_architecture_matrix",
   "comparison_matrix": [
     {
       "active_clock_fraction": 1.0,
@@ -495,8 +491,7 @@
       "total_normalized_energy": 1393509.0
     }
   ],
-
-    "comparison_package_sha256": "5a4be61ce7fd6bc680bbd8bc28bfe7cc9d2ad35adddf642cecff111fbd503d6a",
+  "comparison_package_sha256": "5a4be61ce7fd6bc680bbd8bc28bfe7cc9d2ad35adddf642cecff111fbd503d6a",
   "cost_profile": {
     "cost_unit": "normalized_activity_unit",
     "costs": {
