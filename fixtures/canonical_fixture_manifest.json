@@ -1,0 +1,126 @@
+{
+  "manifest_type": "canonical_fixture_manifest",
+  "manifest_version": "1",
+  "manifest_owner": "FRP Trace Observatory",
+  "upstream_repository": "maximumberlin76-gif/Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor",
+  "upstream_release": "v1.8.0",
+  "upstream_milestone": "M16",
+  "fixture_order": "fixture_path_lexicographic",
+  "fixture_count": 6,
+  "raw_digest_contract": {
+    "algorithm": "sha256",
+    "scope": "raw_source_bytes",
+    "origin": "observatory_calculated"
+  },
+  "copy_requirement": "unchanged_upstream_bytes",
+  "fixtures": [
+    {
+      "fixture_path": "fixtures/comparative_architecture/normalized_cost_profile_v1.json",
+      "source_filename": "normalized_cost_profile_v1.json",
+      "upstream_source_path": "benchmarks/architecture_comparison/profiles/normalized_cost_profile_v1.json",
+      "upstream_schema_identifier": "frp.benchmark.normalized_cost_profile.v1",
+      "upstream_schema_version": "1",
+      "upstream_kind": null,
+      "identification_basis": "embedded_schema_identifier_and_raw_source_digest",
+      "producer_path": "benchmarks/architecture_comparison/common_cost_model.py",
+      "producer_version": null,
+      "validator_path": "benchmarks/architecture_comparison/common_cost_model.py",
+      "measurement_contour": "comparative_architecture_benchmark_suite",
+      "observatory_modes": [
+        "artifact_auditor"
+      ],
+      "byte_length": 677,
+      "raw_source_sha256": "bd2f5bfc4f0430c2764c5f1ddb1258d176b42f1667d1f0f691e40730ddc4c979"
+    },
+    {
+      "fixture_path": "fixtures/comparative_architecture/reference_comparison_seed_76.json",
+      "source_filename": "reference_comparison_seed_76.json",
+      "upstream_source_path": "benchmarks/architecture_comparison/results/reference_comparison_seed_76.json",
+      "upstream_schema_identifier": "frp.benchmark.architecture_comparison.v1",
+      "upstream_schema_version": "1",
+      "upstream_kind": null,
+      "identification_basis": "embedded_schema_identifier_and_raw_source_digest",
+      "producer_path": "benchmarks/architecture_comparison/run_architecture_comparison.py",
+      "producer_version": null,
+      "validator_path": null,
+      "measurement_contour": "comparative_architecture_benchmark_suite",
+      "observatory_modes": [
+        "artifact_auditor"
+      ],
+      "byte_length": 21988,
+      "raw_source_sha256": "c27c4ecbe755df784b6fcb25d5549b719fd98dcf3821f280b7550f1669e8d76e"
+    },
+    {
+      "fixture_path": "fixtures/comparative_architecture/thermal_proxy_profile_v1.json",
+      "source_filename": "thermal_proxy_profile_v1.json",
+      "upstream_source_path": "benchmarks/architecture_comparison/profiles/thermal_proxy_profile_v1.json",
+      "upstream_schema_identifier": "frp.benchmark.thermal_proxy_profile.v1",
+      "upstream_schema_version": "1",
+      "upstream_kind": null,
+      "identification_basis": "embedded_schema_identifier_and_raw_source_digest",
+      "producer_path": "benchmarks/architecture_comparison/common_thermal_model.py",
+      "producer_version": null,
+      "validator_path": "benchmarks/architecture_comparison/common_thermal_model.py",
+      "measurement_contour": "comparative_architecture_benchmark_suite",
+      "observatory_modes": [
+        "artifact_auditor"
+      ],
+      "byte_length": 517,
+      "raw_source_sha256": "aeafebc3e71d1311a3445bd1528cbe7322546f79d6a5099dfed3a9590fc4a25b"
+    },
+    {
+      "fixture_path": "fixtures/comparative_architecture/workload_profile_v1.json",
+      "source_filename": "workload_profile_v1.json",
+      "upstream_source_path": "benchmarks/architecture_comparison/profiles/workload_profile_v1.json",
+      "upstream_schema_identifier": null,
+      "upstream_schema_version": null,
+      "upstream_kind": null,
+      "identification_basis": "exact_upstream_path_and_raw_source_digest",
+      "producer_path": null,
+      "producer_version": null,
+      "validator_path": "benchmarks/architecture_comparison/common_workload.py",
+      "measurement_contour": "comparative_architecture_benchmark_suite",
+      "observatory_modes": [
+        "artifact_auditor"
+      ],
+      "byte_length": 174,
+      "raw_source_sha256": "5680c50220a751ea748e55644dd3a189321ca8e89398bb3751a471556dce94b9"
+    },
+    {
+      "fixture_path": "fixtures/hardware_sensitivity/hardware_sensitivity_cost_profile_v1.json",
+      "source_filename": "hardware_sensitivity_cost_profile_v1.json",
+      "upstream_source_path": "benchmarks/architecture_comparison/profiles/hardware_sensitivity_cost_profile_v1.json",
+      "upstream_schema_identifier": "frp.benchmark.hardware_sensitivity_cost_profile.v1",
+      "upstream_schema_version": "1",
+      "upstream_kind": null,
+      "identification_basis": "embedded_schema_identifier_and_raw_source_digest",
+      "producer_path": null,
+      "producer_version": null,
+      "validator_path": "benchmarks/architecture_comparison/validate_hardware_sensitivity_profile.py",
+      "measurement_contour": "hardware_informed_sensitivity_qualification",
+      "observatory_modes": [
+        "artifact_auditor"
+      ],
+      "byte_length": 15360,
+      "raw_source_sha256": "79c1c17c924bde6947dce477c2b8b64600684c993e7f42c1f00f6ffca0228a1c"
+    },
+    {
+      "fixture_path": "fixtures/hardware_sensitivity/reference_comparison_seed_76_hardware_sensitivity_v1.json",
+      "source_filename": "reference_comparison_seed_76_hardware_sensitivity_v1.json",
+      "upstream_source_path": "benchmarks/architecture_comparison/results/reference_comparison_seed_76_hardware_sensitivity_v1.json",
+      "upstream_schema_identifier": "frp.benchmark.hardware_sensitivity_comparison.v1",
+      "upstream_schema_version": "1",
+      "upstream_kind": null,
+      "identification_basis": "embedded_schema_identifier_and_raw_source_digest",
+      "producer_path": "benchmarks/architecture_comparison/run_hardware_sensitivity_comparison.py",
+      "producer_version": null,
+      "validator_path": null,
+      "measurement_contour": "hardware_informed_sensitivity_qualification",
+      "observatory_modes": [
+        "artifact_auditor"
+      ],
+      "byte_length": 81632,
+      "raw_source_sha256": "f91ae25e06f5ae8024b8847c7aa4c9ac0ae77d78b3b912b1cf882d4dc52b346d"
+    }
+  ]
+}
