@@ -97,8 +97,7 @@
     "fixed_point_add_32",
     "fixed_point_compare_32"
   ],
-
-    "coefficients": {
+  "coefficients": {
     "encoded_bit_toggle": {
       "event_field": "encoded_bit_toggles",
       "cost_class": "encoded_bit_toggle",
@@ -218,8 +217,7 @@
       "derivation_rule": "nominal = 1.5 * queue_read nominal; lower = 1.5; upper = 40.0",
       "uncertainty_class": "high"
     },
-
-       "lut_read_32": {
+    "lut_read_32": {
       "event_field": "lut_reads_32",
       "cost_class": "lut_read_32",
       "lower_bound": 20.0,
@@ -349,8 +347,7 @@
       "fixed_point_compare_32": 2.0
     }
   },
-
-   "evaluation_contract": {
+  "evaluation_contract": {
     "execute_architectures_once": true,
     "preserve_raw_event_traces": true,
     "apply_same_scenario_vector_to_all_architectures": true,
@@ -389,4 +386,4 @@
     "excluded_field": "cost_profile_sha256"
   },
   "cost_profile_sha256": "3814925a54d274bd43ab4576b6e60b53f60a2dfca9520d533ab49700c11dd553"
-} 
+}
