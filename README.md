@@ -87,4 +87,4 @@ The following are outside the scope of FRP Trace Observatory:
 
 ## Author
 
-Maksym Marnov
+Maksym Marnov ( Alchimist)
