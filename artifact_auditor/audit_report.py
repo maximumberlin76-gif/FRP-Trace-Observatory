@@ -222,14 +222,15 @@ def _freeze_audit_value(value: object) -> AuditValue:
                 for key, item in value.items()
             }
         )
-    raise AuditReportError(
+     raise AuditReportError(
         f"unsupported audit value type: {type(value).__name__}"
     )
-  @dataclass(frozen=True, slots=True)
-class AuditValueSnapshot:
-    """One immutable expected or observed validation value."""
 
-    value: AuditValue
+
+@dataclass(frozen=True, slots=True)
+class AuditValueSnapshot:
+    """One immutable expected or observed validation value."""   
+
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -390,10 +391,12 @@ class ValidationCheck:
             self.outcome is CheckOutcome.NOT_EVALUATED
             and self.severity is MessageSeverity.ERROR
         ):
-            raise AuditReportError(
+                        raise AuditReportError(
                 "not-evaluated checks must not have error severity"
             )
-          @dataclass(frozen=True, slots=True)
+
+
+@dataclass(frozen=True, slots=True)
 class AuditReport:
     """One Observatory-derived report backed by immutable checks."""
 
@@ -522,7 +525,8 @@ class AuditReport:
 
         self._validate_registry_association()
         self._validate_aggregate_status()
-         def _validate_registry_association(self) -> None:
+
+    def _validate_registry_association(self) -> None:
         registered_statuses = {
             ValidationStatus.RECOGNIZED_VALID,
             ValidationStatus.RECOGNIZED_VALID_WITH_WARNINGS,
