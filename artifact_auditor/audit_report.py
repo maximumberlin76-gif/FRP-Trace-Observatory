@@ -222,15 +222,16 @@ def _freeze_audit_value(value: object) -> AuditValue:
                 for key, item in value.items()
             }
         )
-     raise AuditReportError(
+    raise AuditReportError(
         f"unsupported audit value type: {type(value).__name__}"
     )
 
 
 @dataclass(frozen=True, slots=True)
 class AuditValueSnapshot:
-    """One immutable expected or observed validation value."""   
+    """One immutable expected or observed validation value."""
 
+    value: AuditValue
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -391,10 +392,10 @@ class ValidationCheck:
             self.outcome is CheckOutcome.NOT_EVALUATED
             and self.severity is MessageSeverity.ERROR
         ):
-                        raise AuditReportError(
+            raise AuditReportError(
                 "not-evaluated checks must not have error severity"
             )
-
+            
 
 @dataclass(frozen=True, slots=True)
 class AuditReport:
@@ -660,4 +661,4 @@ class AuditReport:
     def report_origin(self) -> str:
         """Identify the report as an Observatory-derived artifact."""
 
-        return "observatory_derived" 
+        return "observatory_derived"
