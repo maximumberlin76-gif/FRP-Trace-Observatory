@@ -395,7 +395,7 @@ class ValidationCheck:
             raise AuditReportError(
                 "not-evaluated checks must not have error severity"
             )
-            
+        
 
 @dataclass(frozen=True, slots=True)
 class AuditReport:
