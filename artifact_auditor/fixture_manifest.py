@@ -851,5 +851,3 @@ def parse_canonical_fixture_manifest(
         ),
         fixtures=fixtures,
     )
-                
-        
