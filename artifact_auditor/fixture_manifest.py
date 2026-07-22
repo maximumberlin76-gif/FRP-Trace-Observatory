@@ -191,7 +191,116 @@ def _validate_sha256(value: str, field_name: str) -> None:
         raise FixtureManifestError(
             f"{field_name} must be 64 lowercase hexadecimal characters"
         )
-      @dataclass(frozen=True, slots=True)
+
+
+def _require_exact_fields(
+    value: Mapping[str, JsonValue],
+    expected_fields: frozenset[str],
+    *,
+    json_path: str,
+) -> None:
+    observed_fields = frozenset(value)
+    if observed_fields == expected_fields:
+        return
+    missing = tuple(sorted(expected_fields - observed_fields))
+    unexpected = tuple(sorted(observed_fields - expected_fields))
+    details: list[str] = []
+    if missing:
+        details.append(f"missing fields: {missing!r}")
+    if unexpected:
+        details.append(f"unexpected fields: {unexpected!r}")
+    raise FixtureManifestError(
+        "; ".join(details),
+        json_path=json_path,
+    )
+
+
+def _require_mapping(
+    value: JsonValue,
+    *,
+    json_path: str,
+) -> Mapping[str, JsonValue]:
+    if not isinstance(value, Mapping):
+        raise FixtureManifestError(
+            "value must be an object",
+            json_path=json_path,
+        )
+    return value
+
+
+def _require_array(
+    value: JsonValue,
+    *,
+    json_path: str,
+) -> tuple[JsonValue, ...]:
+    if not isinstance(value, tuple):
+        raise FixtureManifestError(
+            "value must be an array",
+            json_path=json_path,
+        )
+    return value
+
+
+def _require_string(
+    value: JsonValue,
+    *,
+    json_path: str,
+) -> str:
+    if not isinstance(value, str):
+        raise FixtureManifestError(
+            "value must be a string",
+            json_path=json_path,
+        )
+    return value
+
+
+def _optional_string(
+    value: JsonValue,
+    *,
+    json_path: str,
+) -> str | None:
+    if value is None:
+        return None
+    return _require_string(value, json_path=json_path)
+
+
+def _require_integer(
+    value: JsonValue,
+    *,
+    json_path: str,
+) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise FixtureManifestError(
+            "value must be an integer",
+            json_path=json_path,
+        )
+    return value
+
+
+@dataclass(frozen=True, slots=True)
+class RawDigestContract:
+    """Digest rules for the unchanged canonical fixture bytes."""
+
+    algorithm: str
+    scope: str
+    origin: str
+
+    def __post_init__(self) -> None:
+        if self.algorithm != _RAW_DIGEST_ALGORITHM:
+            raise FixtureManifestError(
+                f"algorithm must be {_RAW_DIGEST_ALGORITHM!r}"
+            )
+        if self.scope != _RAW_DIGEST_SCOPE:
+            raise FixtureManifestError(
+                f"scope must be {_RAW_DIGEST_SCOPE!r}"
+            )
+        if self.origin != _RAW_DIGEST_ORIGIN:
+            raise FixtureManifestError(
+                f"origin must be {_RAW_DIGEST_ORIGIN!r}"
+            )
+
+
+@dataclass(frozen=True, slots=True)
 class CanonicalFixtureRecord:
     """One immutable upstream-to-Observatory fixture association."""
 
@@ -363,7 +472,9 @@ class CanonicalFixtureRecord:
             and source.byte_length == self.byte_length
             and source.content_sha256 == self.raw_source_sha256
         )
-      @dataclass(frozen=True, slots=True)
+
+
+@dataclass(frozen=True, slots=True)
 class CanonicalFixtureManifest:
     """Immutable parsed inventory linked to unchanged manifest bytes."""
 
@@ -520,7 +631,9 @@ class CanonicalFixtureManifest:
             if fixture.upstream_source_path == upstream_source_path:
                 return fixture
         raise KeyError(upstream_source_path)
-      def _parse_raw_digest_contract(
+
+
+def _parse_raw_digest_contract(
     value: JsonValue,
     *,
     json_path: str,
@@ -663,7 +776,9 @@ def _parse_fixture_record(
             exc.message,
             json_path=json_path,
         ) from exc
-      def parse_canonical_fixture_manifest(
+
+
+def parse_canonical_fixture_manifest(
     source: SourceArtifact,
 ) -> CanonicalFixtureManifest:
     """Parse the internal manifest without assigning upstream semantics."""
@@ -736,3 +851,5 @@ def _parse_fixture_record(
         ),
         fixtures=fixtures,
     )
+                
+        
