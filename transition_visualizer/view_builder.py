@@ -473,7 +473,7 @@ class TransitionViewBuilder:
             source_order_preserved=True,
         )
 
-     def source_order_projection(
+    def source_order_projection(
         self,
         record_type: VisualizerRecordType,
         record_ids: tuple[str, ...],
