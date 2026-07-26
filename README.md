@@ -138,11 +138,12 @@ for:
 - event-counter snapshots;
 - invariant bits and invariant vectors.
 
-The derived-view builder supports validated filtering and correlation by tick,
-cell, scheduler state, event type, source artifact, request status, route
-status, and registered record type. Derived views retain source record
-identities, validation report identities, registry revision, source ordering,
-and the `observatory_derived` origin label.
+The derived-view builder supports exact tick, cell, request-lane,
+scheduler-state, and event-type filters; source-order and record-identifier
+projections; canonical state-transition projections; and trace-to-route
+correlation. Derived views retain source record identities, validation report
+identities, registry revision, source ordering, and the
+`observatory_derived` origin label.
 
 No user-interface framework or renderer is selected by the current repository.
 
@@ -234,6 +235,9 @@ physical-chip measurement evidence.
 
 ```text
 FRP-Trace-Observatory/
+├── .github/
+│   └── workflows/
+│       └── observatory-ci.yml
 ├── artifact_auditor/
 ├── docs/
 ├── fixtures/
@@ -278,19 +282,31 @@ parsers, validators, deterministic packages, canonical fixtures, audit report
 construction and serialization, trace construction, transition records,
 telemetry, invariant vectors, and derived-view builders.
 
-CI workflow evidence and a release package are not yet declared. They follow
-completion of the current documentation synchronization.
+Repository verification is also executed by
+[`FRP Trace Observatory CI`](.github/workflows/observatory-ci.yml). The
+workflow runs on pushes and pull requests targeting `main` and by manual
+dispatch. It:
+
+- checks out the repository without persisting credentials;
+- sets up Python 3.12;
+- compiles all Python source and test directories;
+- runs the complete test suite.
+
+GitHub Actions run `FRP Trace Observatory CI #3` completed with `SUCCESS` for
+commit `a719b08`.
+
+A release package is not yet declared.
 
 ## Project Status
 
 The integration contract, compatibility registry, normalized read-only data
 model, parsers, canonical fixture inventory, Artifact Auditor core, Ternary
-Transition Visualizer data layer, Trace Explorer data layer, and repository
-tests are implemented.
+Transition Visualizer data layer, Trace Explorer data layer, repository tests,
+documentation, and repository verification workflow are implemented.
 
-Documentation synchronization is in progress. No Observatory release version,
-release qualification status, UI framework, hosted service, or release package
-is declared by the current repository state.
+No Observatory release version, release qualification status, UI framework,
+hosted service, or release package is declared by the current repository
+state.
 
 ## Versioning
 
