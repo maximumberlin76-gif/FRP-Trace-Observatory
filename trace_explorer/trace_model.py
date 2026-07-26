@@ -899,7 +899,8 @@ class TickRecord:
             "validation_check_ids",
         )
 
-  @dataclass(frozen=True, slots=True)
+
+@dataclass(frozen=True, slots=True)
 class TraceDataset:
     """One immutable, source-ordered trace normalization boundary."""
 
@@ -1250,7 +1251,7 @@ class TraceDataset:
                     "source record metadata must match its registered value"
                 )
 
-              def _owned_record_ids(self) -> tuple[str, ...]:
+    def _owned_record_ids(self) -> tuple[str, ...]:
         record_ids: list[str] = [self.trace_dataset_id]
         record_ids.extend(
             field.trace_field_id
@@ -1703,5 +1704,3 @@ class TraceDataset:
                 for field_name, values in collections.items()
             }
         )
-
- 
