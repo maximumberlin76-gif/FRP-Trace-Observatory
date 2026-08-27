@@ -1,0 +1,492 @@
+name: FRP Observatory M7A Published Trace Explorer Source Bootstrap
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: frp-observatory-m7a-published-trace-explorer-source-main
+  cancel-in-progress: false
+
+jobs:
+  bootstrap-published-trace-explorer-source:
+    name: Bootstrap the exact M16 published Trace Explorer source
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out Observatory main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: observatory
+
+      - name: Check out FRP upstream main read-only
+        uses: actions/checkout@v4
+        with:
+          repository: maximumberlin76-gif/Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor
+          ref: main
+          path: upstream
+          persist-credentials: false
+
+      - name: Set up exact Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Require manual main-branch execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF_NAME" != "main" ]]; then
+            echo "Run this workflow manually from Branch: main."
+            exit 1
+          fi
+
+      - name: Require exact green M1 through M6 dependencies
+        working-directory: observatory
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          requirements = {
+              "artifact_auditor/m30_archive_intake.py":
+                  "d1101f5baf74fdcea4d08a14e7b21e1a6657ca19eb29d8387aba15f3ac5d904d",
+              "artifact_auditor/m30_published_boundary_intake.py":
+                  "4b1f580596425b15dd4548c30336db45a14b7aad4285feeb7cb490edc20b4b42",
+              "schemas/m30_published_registry.py":
+                  "d2769b3444a836e17e41a47fd34ca9c792d0897cb68e345ed4f622ff72ec8ab0",
+              "tests/test_m30_published_registry.py":
+                  "310f5e50a06d3e36603d49114741f6f87622d2b9f419773aabe1b2c9facadb99",
+              "parsers/m30_published_member_intake.py":
+                  "827af9233facfee466606163589c0b068d107b05e6bb8cbff4245409a09c367a",
+              "tests/test_m30_published_member_intake.py":
+                  "873bfa4c0d163b6a1b0df09873cdec6ecb39f12d496f49a76ec98bc5cda02c9e",
+              "parsers/m30_published_dispatch.py":
+                  "ba65c7cc1ad6d483dc1bbb09c729a165074280581f988f5a272c5e1289a33d50",
+              "tests/test_m30_published_dispatch.py":
+                  "a2ac6b0b5c6112756d0bec193b51e60926d07c45ce8ca6450110623db643ad64",
+              "artifact_auditor/m30_published_auditor.py":
+                  "3964ffaf2c0c51ba15a637ee3c18897de966d4b32e7931aabdd0d52c97c7de59",
+              "tests/test_m30_published_auditor.py":
+                  "18c3e4716337bba35000a4c44aab2f334d9cb4af98365517f712ddadaa26130a",
+              "parsers/source_artifact.py":
+                  "dad32b37e8a14213d91c9bfb407129ebb077432a8a366ad6ddb9a78bc9a0d59e",
+              "parsers/json_artifact.py":
+                  "3164a5704404f6ef7a16cfd6954ec14c9b1c1c757da3e7584eb500798e071efb",
+              "schemas/registry.py":
+                  "4d17a350bccd27edaafe1736a70ee153da426556355ce113416dbe6b596a43f2",
+              "parsers/artifact_dispatch.py":
+                  "abc765e34efd27a532b1fca0c91fc1982dbadd0a6d3d34b619e31225895cf050",
+              "artifact_auditor/audit_report.py":
+                  "94c665e47257c8ed3b2df03844791fd0bdc415aad3791a8eea155114492ddfc2",
+          }
+
+          for path_value, expected in requirements.items():
+              target = Path(path_value)
+              if target.is_symlink() or not target.is_file():
+                  raise SystemExit(f"Required exact source is missing: {target}")
+              observed = sha256(target.read_bytes()).hexdigest()
+              if observed != expected:
+                  raise SystemExit(
+                      f"Source mismatch for {target}: {observed} != {expected}"
+                  )
+              print(f"Exact dependency: {target}: PASS")
+          PY
+
+      - name: Verify the exact upstream M30 package identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          archive = Path(
+              "upstream/artifacts/m30/packages/"
+              "frp-v3.2.0-m30-archival-release.tar.gz"
+          )
+          expected_length = 10_189_989
+          expected_digest = (
+              "05ea33f6f3f505d315af930c2d51779f7189905308473f32a57375e477069caa"
+          )
+
+          if archive.is_symlink() or not archive.is_file():
+              raise SystemExit("Exact FRP M30 archival package is missing")
+
+          raw = archive.read_bytes()
+          observed_digest = sha256(raw).hexdigest()
+
+          if len(raw) != expected_length:
+              raise SystemExit(
+                  f"M30 package length mismatch: {len(raw)} != {expected_length}"
+              )
+          if observed_digest != expected_digest:
+              raise SystemExit(
+                  f"M30 package digest mismatch: "
+                  f"{observed_digest} != {expected_digest}"
+              )
+
+          print("Exact FRP v3.2.0 / M30 package identity: PASS")
+          PY
+
+      - name: Install the complete M30 published Trace Explorer source
+        working-directory: observatory
+        shell: bash
+        env:
+          MODULE_SHA256: 986335318fac7dbc894ab18133645653e712944e2997aaaf484e1c7a46f1c879
+          MODULE_GZIP_BASE64: |
+            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
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import gzip
+          import hashlib
+          import os
+          from pathlib import Path
+
+          target = Path("trace_explorer/m30_published_trace_explorer.py")
+          encoded = "".join(os.environ["MODULE_GZIP_BASE64"].split())
+          compressed = base64.b64decode(encoded, validate=True)
+          source = gzip.decompress(compressed)
+          expected = os.environ["MODULE_SHA256"]
+          observed = hashlib.sha256(source).hexdigest()
+
+          if observed != expected:
+              raise SystemExit(
+                  f"Decoded module digest mismatch: {observed} != {expected}"
+              )
+
+          target.parent.mkdir(parents=True, exist_ok=True)
+          target.write_bytes(source)
+
+          written = hashlib.sha256(target.read_bytes()).hexdigest()
+          if written != expected:
+              raise SystemExit(
+                  f"Written module digest mismatch: {written} != {expected}"
+              )
+
+          print(f"Installed complete source: {target}")
+          print(f"source_sha256={expected}")
+          PY
+
+      - name: Validate the exact M16 Trace Explorer source boundary
+        working-directory: observatory
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          archive="../upstream/artifacts/m30/packages/frp-v3.2.0-m30-archival-release.tar.gz"
+
+          python -m compileall -q \
+            artifact_auditor \
+            parsers \
+            schemas \
+            trace_explorer \
+            transition_visualizer \
+            tests
+
+          PYTHONPATH=. python -m trace_explorer.m30_published_trace_explorer \
+            --archive "$archive"
+
+          FRP_M30_ARCHIVE_PATH="$archive" PYTHONPATH=. python - <<'PY'
+          from artifact_auditor.audit_report import ValidationStatus
+          from schemas.registry import ObservatoryMode
+          from trace_explorer.m30_published_trace_explorer import (
+              explore_m30_published_archive,
+          )
+
+          archive = (
+              "../upstream/artifacts/m30/packages/"
+              "frp-v3.2.0-m30-archival-release.tar.gz"
+          )
+          result = explore_m30_published_archive(archive)
+
+          if result.audit_batch.overall_status is not (
+              ValidationStatus.RECOGNIZED_VALID
+          ):
+              raise SystemExit("M7A did not receive a green M6 audit batch")
+
+          if result.audit_batch.batch_sha256 != (
+              "aeb9c1d7390a3bc3d1d7ef35c5f3f110e195e9b7ac8d4a4f4636c47c0a99bd03"
+          ):
+              raise SystemExit("M6 audit batch identity changed")
+
+          if (
+              result.audit_batch.total_check_count,
+              result.audit_batch.failed_check_count,
+          ) != (69, 0):
+              raise SystemExit("M6 audit evidence changed")
+
+          if result.member_id != "m16-fpga-preparation-execution-trace":
+              raise SystemExit("M7A selected the wrong published member")
+
+          if result.dispatch.dispatch_sha256 != (
+              "55e9c53f55cc5507e33271bfcdd2a48c751fd710b9fe8f9df972fc1c308f69b2"
+          ):
+              raise SystemExit("M5 Trace Explorer dispatch identity changed")
+
+          expected_dispatch = (
+              result.audit_batch.dispatch_batch.dispatch_for(
+                  "m16-fpga-preparation-execution-trace",
+                  ObservatoryMode.TRACE_EXPLORER,
+              )
+          )
+          if result.dispatch is not expected_dispatch:
+              raise SystemExit("M7A reconstructed the M5 dispatch route")
+
+          if (
+              result.record_count,
+              result.cell_snapshot_count,
+              result.request_count,
+          ) != (4, 32, 8):
+              raise SystemExit("M7A complete trace inventory changed")
+
+          if result.source_record_digest != (
+              "4b2e8aec64a0b3cb76d0819383ed66d306b8e50dc3feb7bb8c6c76486cd83d57"
+          ):
+              raise SystemExit("M16 source record digest changed")
+
+          if result.dataset_sha256 != (
+              "4e6e0a1cd13dccbf6c6ab45850aefcb09d212fe4883f2d56c2c190dbee42bafd"
+          ):
+              raise SystemExit("M7A deterministic dataset digest changed")
+
+          if result.trace_dataset_id != (
+              "4191b36e-9168-5fc7-a4b5-cbc3b480136f"
+          ):
+              raise SystemExit("M7A deterministic dataset identifier changed")
+
+          if result.observed_ternary_domain != (-1, 0, 1):
+              raise SystemExit("Ternary domain is not exactly -1/0/1")
+
+          if result.observed_scheduler_modes != ("free", "1/7"):
+              raise SystemExit("Source-observed scheduler modes changed")
+
+          if "7/1" in result.observed_scheduler_modes:
+              raise SystemExit("M7A synthesized an unobserved 7/1 record")
+
+          global_core = result.audit_batch.report_for_member(
+              "m28-trace-observatory-upstream-contract"
+          ).dispatch.parsed_artifact.root["immutable_core"]
+
+          if global_core["balanced_ternary_notation"] != "-1/0/1":
+              raise SystemExit("Immutable kernel notation changed")
+
+          if global_core["semantic_values"] != (-1, 0, 1):
+              raise SystemExit("Immutable ternary values changed")
+
+          if global_core["active_neutral_state"] != 0:
+              raise SystemExit("Immutable active neutral state changed")
+
+          if global_core["temporal_scheduler_modes"] != ("1/7", "7/1"):
+              raise SystemExit("Immutable scheduler order changed")
+
+          direction = result.audit_batch.report_for_member(
+              "m28-trace-observatory-upstream-contract"
+          ).dispatch.parsed_artifact.root["integration_direction"]
+
+          if direction["direction"] != "upstream_to_downstream_only":
+              raise SystemExit("Observatory integration direction changed")
+
+          if direction["downstream_source_mutation"] != "forbidden":
+              raise SystemExit("Downstream source mutation became allowed")
+
+          if direction["downstream_writeback"] != "forbidden":
+              raise SystemExit("Downstream writeback became allowed")
+
+          repeated = explore_m30_published_archive(archive)
+          if repeated.dataset_sha256 != result.dataset_sha256:
+              raise SystemExit("Repeated M7A projection digest changed")
+
+          if repeated.trace_dataset_id != result.trace_dataset_id:
+              raise SystemExit("Repeated M7A projection identifier changed")
+
+          print("Exact M16 Trace Explorer source projection: PASS")
+          print("Four records, 32 cell snapshots, eight requests: RETAINED")
+          print("Balanced ternary kernel -1/0/1: RETAINED")
+          print("Active neutral state 0: RETAINED")
+          print("Global scheduler order 1/7 and 7/1: RETAINED")
+          print("Observed free and 1/7 source records: RETAINED")
+          print("Unobserved 7/1 record synthesis: FORBIDDEN")
+          print("Upstream source mutation and writeback: FORBIDDEN")
+          PY
+
+          FRP_M30_ARCHIVE_PATH="$archive" \
+            PYTHONPATH=. \
+            python -m unittest discover -s tests -v \
+            2>&1 | tee m7a-regression.log
+
+          grep -F "Ran 377 tests" m7a-regression.log
+          grep -Fx "OK" m7a-regression.log
+          rm m7a-regression.log
+
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          archive = Path(
+              "../upstream/artifacts/m30/packages/"
+              "frp-v3.2.0-m30-archival-release.tar.gz"
+          )
+          expected = (
+              "05ea33f6f3f505d315af930c2d51779f7189905308473f32a57375e477069caa"
+          )
+          observed = sha256(archive.read_bytes()).hexdigest()
+
+          if observed != expected:
+              raise SystemExit("Upstream archive changed during M7A validation")
+
+          print("Read-only upstream archive after M7A: VERIFIED")
+          PY
+
+      - name: Commit the complete M30 published Trace Explorer source
+        working-directory: observatory
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          target="trace_explorer/m30_published_trace_explorer.py"
+
+          git diff --check -- "$target"
+          git add -- "$target"
+
+          if git diff --cached --quiet; then
+            echo "The exact M30 published Trace Explorer source is already current."
+            exit 0
+          fi
+
+          unexpected="$(
+            git diff --cached --name-only |
+              grep -Ev '^trace_explorer/m30_published_trace_explorer.py$' ||
+              true
+          )"
+
+          if [[ -n "$unexpected" ]]; then
+            echo "Unexpected staged paths:"
+            printf '%s\n' "$unexpected"
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git commit \
+            -m "Add M30 published Trace Explorer source" \
+            -m "Create the deterministic read-only M16 Trace Explorer projection from exact M6 audit evidence while retaining source order, -1/0/1 states, active-neutral routing, observed scheduler records, source coordinates, separate measurement contours, and the upstream-only no-writeback boundary."
+
+          git push origin HEAD:main
