@@ -1,0 +1,246 @@
+name: FRP Observatory M1 M30 Archive Intake Bootstrap
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: frp-observatory-m1-m30-archive-intake-main
+  cancel-in-progress: false
+
+jobs:
+  bootstrap-m30-archive-intake:
+    name: Bootstrap exact M30 archive intake
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out Observatory main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: observatory
+
+      - name: Check out FRP upstream main read-only
+        uses: actions/checkout@v4
+        with:
+          repository: maximumberlin76-gif/Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor
+          ref: main
+          path: upstream
+          persist-credentials: false
+
+      - name: Set up exact Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Require manual main-branch execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF_NAME}" != "main" ]]; then
+            echo "Run this workflow manually from Branch: main."
+            exit 1
+          fi
+
+      - name: Verify the exact upstream M30 package identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          archive = Path(
+              "upstream/artifacts/m30/packages/"
+              "frp-v3.2.0-m30-archival-release.tar.gz"
+          )
+          expected_length = 10_189_989
+          expected_digest = (
+              "05ea33f6f3f505d315af930c2d51779f7189905308473f32a57375e477069caa"
+          )
+          if archive.is_symlink() or not archive.is_file():
+              raise SystemExit("Exact FRP M30 archival package is missing")
+          raw = archive.read_bytes()
+          if len(raw) != expected_length:
+              raise SystemExit(
+                  f"M30 package length mismatch: {len(raw)} != {expected_length}"
+              )
+          observed_digest = sha256(raw).hexdigest()
+          if observed_digest != expected_digest:
+              raise SystemExit(
+                  "M30 package digest mismatch: "
+                  f"{observed_digest} != {expected_digest}"
+              )
+          print("Exact FRP v3.2.0 / M30 package identity: PASS")
+          PY
+
+      - name: Install the complete archive intake source
+        working-directory: observatory
+        shell: bash
+        env:
+          MODULE_SHA256: d1101f5baf74fdcea4d08a14e7b21e1a6657ca19eb29d8387aba15f3ac5d904d
+          MODULE_GZIP_BASE64: |
+            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
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import gzip
+          import hashlib
+          import os
+          from pathlib import Path
+
+          encoded = "".join(os.environ["MODULE_GZIP_BASE64"].split())
+          compressed = base64.b64decode(encoded, validate=True)
+          source = gzip.decompress(compressed)
+          expected = os.environ["MODULE_SHA256"]
+          observed = hashlib.sha256(source).hexdigest()
+          if observed != expected:
+              raise SystemExit(
+                  f"Decoded module digest mismatch: {observed} != {expected}"
+              )
+          target = Path("artifact_auditor/m30_archive_intake.py")
+          target.parent.mkdir(parents=True, exist_ok=True)
+          target.write_bytes(source)
+          if hashlib.sha256(target.read_bytes()).hexdigest() != expected:
+              raise SystemExit("Written module digest mismatch")
+          print(f"Installed complete source: {target}")
+          print(f"source_sha256={expected}")
+          PY
+
+      - name: Validate the complete Observatory repository and M30 intake
+        working-directory: observatory
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m compileall -q \
+            artifact_auditor \
+            parsers \
+            schemas \
+            trace_explorer \
+            transition_visualizer \
+            tests
+
+          PYTHONPATH=. python -m artifact_auditor.m30_archive_intake \
+            --archive \
+            ../upstream/artifacts/m30/packages/frp-v3.2.0-m30-archival-release.tar.gz
+
+          PYTHONPATH=. python - <<'PY'
+          from pathlib import Path
+
+          from artifact_auditor.m30_archive_intake import validate_m30_archive
+
+          member_path = (
+              "artifacts/m28/contracts/"
+              "m28-trace-observatory-upstream-contract.json"
+          )
+          archive_path = Path(
+              "../upstream/artifacts/m30/packages/"
+              "frp-v3.2.0-m30-archival-release.tar.gz"
+          )
+          result = validate_m30_archive(
+              archive_path,
+              retain_paths=(member_path,),
+          )
+          retained = result.retained_member(member_path)
+          if not retained.raw_bytes.startswith(b"{"):
+              raise SystemExit("Retained M28 contract is not exact JSON bytes")
+          if retained.member != result.member(member_path):
+              raise SystemExit("Retained M28 member metadata mismatch")
+          print("Exact retained-member boundary: PASS")
+          PY
+
+          python -m unittest discover -s tests -v 2>&1 | tee m1-tests.log
+          grep -F "Ran 275 tests" m1-tests.log
+          grep -Fx "OK" m1-tests.log
+          rm -f m1-tests.log
+
+      - name: Commit the complete archive intake source
+        working-directory: observatory
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="artifact_auditor/m30_archive_intake.py"
+          git diff --check -- "${target}"
+          git add -- "${target}"
+
+          if git diff --cached --quiet; then
+            echo "The exact M30 archive intake source is already current."
+            exit 0
+          fi
+
+          changed="$(git diff --cached --name-only)"
+          if [[ "${changed}" != "${target}" ]]; then
+            echo "Unexpected staged paths:"
+            printf '%s\n' "${changed}"
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit \
+            -m "Add M30 archival release intake validator" \
+            -m "Validate the exact FRP v3.2.0 archive, all 519 tar members, and all 518 internal manifest records without extraction or source execution."
+          git push origin HEAD:main
