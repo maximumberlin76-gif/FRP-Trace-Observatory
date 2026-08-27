@@ -1,0 +1,334 @@
+name: FRP Observatory M2 Published Boundary Intake Bootstrap
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: frp-observatory-m2-published-boundary-intake-main
+  cancel-in-progress: false
+
+jobs:
+  bootstrap-published-boundary-intake:
+    name: Bootstrap exact M28-M30 published boundary intake
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out Observatory main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: observatory
+
+      - name: Check out FRP upstream main read-only
+        uses: actions/checkout@v4
+        with:
+          repository: maximumberlin76-gif/Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor
+          ref: main
+          path: upstream
+          persist-credentials: false
+
+      - name: Set up exact Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Require manual main-branch execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF_NAME" != "main" ]]; then
+            echo "Run this workflow manually from Branch: main."
+            exit 1
+          fi
+
+      - name: Require the exact green M1 archive intake source
+        working-directory: observatory
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          target = Path("artifact_auditor/m30_archive_intake.py")
+          expected = (
+              "d1101f5baf74fdcea4d08a14e7b21e1a6657ca19eb29d8387aba15f3ac5d904d"
+          )
+          if target.is_symlink() or not target.is_file():
+              raise SystemExit("Green M1 archive intake source is missing")
+          observed = sha256(target.read_bytes()).hexdigest()
+          if observed != expected:
+              raise SystemExit(
+                  f"M1 archive intake source mismatch: {observed} != {expected}"
+              )
+          print("Exact green M1 archive intake source: PASS")
+          PY
+
+      - name: Verify the exact upstream M30 package identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          archive = Path(
+              "upstream/artifacts/m30/packages/"
+              "frp-v3.2.0-m30-archival-release.tar.gz"
+          )
+          expected_length = 10_189_989
+          expected_digest = (
+              "05ea33f6f3f505d315af930c2d51779f7189905308473f32a57375e477069caa"
+          )
+          if archive.is_symlink() or not archive.is_file():
+              raise SystemExit("Exact FRP M30 archival package is missing")
+          raw = archive.read_bytes()
+          if len(raw) != expected_length:
+              raise SystemExit(
+                  f"M30 package length mismatch: {len(raw)} != {expected_length}"
+              )
+          observed_digest = sha256(raw).hexdigest()
+          if observed_digest != expected_digest:
+              raise SystemExit(
+                  "M30 package digest mismatch: "
+                  f"{observed_digest} != {expected_digest}"
+              )
+          print("Exact FRP v3.2.0 / M30 package identity: PASS")
+          PY
+
+      - name: Install the complete published boundary intake source
+        working-directory: observatory
+        shell: bash
+        env:
+          MODULE_SHA256: 4b1f580596425b15dd4548c30336db45a14b7aad4285feeb7cb490edc20b4b42
+          MODULE_GZIP_BASE64: |
+            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
+            m/9smQApzqPT7/4Pdg7mcpChAAA=
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import gzip
+          import hashlib
+          import os
+          from pathlib import Path
+
+          encoded = "".join(os.environ["MODULE_GZIP_BASE64"].split())
+          compressed = base64.b64decode(encoded, validate=True)
+          source = gzip.decompress(compressed)
+          expected = os.environ["MODULE_SHA256"]
+          observed = hashlib.sha256(source).hexdigest()
+          if observed != expected:
+              raise SystemExit(
+                  f"Decoded module digest mismatch: {observed} != {expected}"
+              )
+          target = Path("artifact_auditor/m30_published_boundary_intake.py")
+          target.parent.mkdir(parents=True, exist_ok=True)
+          target.write_bytes(source)
+          if hashlib.sha256(target.read_bytes()).hexdigest() != expected:
+              raise SystemExit("Written module digest mismatch")
+          print(f"Installed complete source: {target}")
+          print(f"source_sha256={expected}")
+          PY
+
+      - name: Validate the complete published-byte boundary
+        working-directory: observatory
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="../upstream/artifacts/m30/packages/frp-v3.2.0-m30-archival-release.tar.gz"
+
+          python -m compileall -q \
+            artifact_auditor \
+            parsers \
+            schemas \
+            trace_explorer \
+            transition_visualizer \
+            tests
+
+          PYTHONPATH=. python -m artifact_auditor.m30_archive_intake \
+            --archive "$archive"
+
+          PYTHONPATH=. python -m artifact_auditor.m30_published_boundary_intake \
+            --archive "$archive"
+
+          PYTHONPATH=. python - <<'PY'
+          from pathlib import Path
+
+          from artifact_auditor.m30_published_boundary_intake import (
+              validate_m30_published_boundary,
+          )
+
+          archive = Path(
+              "../upstream/artifacts/m30/packages/"
+              "frp-v3.2.0-m30-archival-release.tar.gz"
+          )
+          result = validate_m30_published_boundary(archive)
+          if len(result.documents) != 8:
+              raise SystemExit("M28-M30 boundary document count mismatch")
+          if result.supported_artifact_count != 97:
+              raise SystemExit("M29 supported artifact count mismatch")
+          if len(result.demo_members) != 4:
+              raise SystemExit("M29 exact demo member count mismatch")
+          if result.accepted_vector_count != 4:
+              raise SystemExit("M29 accepted vector count mismatch")
+          if result.rejected_vector_count != 8:
+              raise SystemExit("M29 rejected vector count mismatch")
+          print("Exact M28-M30 retained published-byte boundary: PASS")
+          print("Immutable core -1/0/1: PASS")
+          print("Temporal scheduler modes 1/7 and 7/1: PASS")
+          print("One-way no-writeback Observatory boundary: PASS")
+          PY
+
+          python -m unittest discover -s tests -v 2>&1 | tee m2-tests.log
+          grep -F "Ran 275 tests" m2-tests.log
+          grep -Fx "OK" m2-tests.log
+          rm -f m2-tests.log
+
+      - name: Commit the complete published boundary intake source
+        working-directory: observatory
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="artifact_auditor/m30_published_boundary_intake.py"
+          git diff --check -- "$target"
+          git add -- "$target"
+
+          if git diff --cached --quiet; then
+            echo "The exact M30 published boundary intake source is already current."
+            exit 0
+          fi
+
+          changed="$(git diff --cached --name-only)"
+          if [[ "$changed" != "$target" ]]; then
+            echo "Unexpected staged paths:"
+            printf '%s\n' "$changed"
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit \
+            -m "Add M30 published-boundary intake validator" \
+            -m "Validate the exact M28-M30 one-way FRP-to-Observatory boundary, all 97 registered artifacts, four canonical demo members, and compatibility vectors without extraction or source execution."
+          git push origin HEAD:main
