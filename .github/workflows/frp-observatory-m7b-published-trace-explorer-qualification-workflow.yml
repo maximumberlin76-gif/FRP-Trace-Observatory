@@ -1,0 +1,630 @@
+name: FRP Observatory M7B Published Trace Explorer Qualification Bootstrap
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: frp-observatory-m7b-published-trace-explorer-qualification-main
+  cancel-in-progress: false
+
+jobs:
+  qualify-published-trace-explorer:
+    name: Qualify the exact M16 published Trace Explorer dataset
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out Observatory main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: observatory
+
+      - name: Check out FRP upstream main read-only
+        uses: actions/checkout@v4
+        with:
+          repository: maximumberlin76-gif/Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor
+          ref: main
+          path: upstream
+          persist-credentials: false
+
+      - name: Set up exact Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Require manual main-branch execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF_NAME" != "main" ]]; then
+            echo "Run this workflow manually from Branch: main."
+            exit 1
+          fi
+
+      - name: Require exact green M1 through M7A sources
+        working-directory: observatory
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          requirements = {
+              "artifact_auditor/m30_archive_intake.py":
+                  "d1101f5baf74fdcea4d08a14e7b21e1a6657ca19eb29d8387aba15f3ac5d904d",
+              "artifact_auditor/m30_published_boundary_intake.py":
+                  "4b1f580596425b15dd4548c30336db45a14b7aad4285feeb7cb490edc20b4b42",
+              "schemas/m30_published_registry.py":
+                  "d2769b3444a836e17e41a47fd34ca9c792d0897cb68e345ed4f622ff72ec8ab0",
+              "tests/test_m30_published_registry.py":
+                  "310f5e50a06d3e36603d49114741f6f87622d2b9f419773aabe1b2c9facadb99",
+              "parsers/m30_published_member_intake.py":
+                  "827af9233facfee466606163589c0b068d107b05e6bb8cbff4245409a09c367a",
+              "tests/test_m30_published_member_intake.py":
+                  "873bfa4c0d163b6a1b0df09873cdec6ecb39f12d496f49a76ec98bc5cda02c9e",
+              "parsers/m30_published_dispatch.py":
+                  "ba65c7cc1ad6d483dc1bbb09c729a165074280581f988f5a272c5e1289a33d50",
+              "tests/test_m30_published_dispatch.py":
+                  "a2ac6b0b5c6112756d0bec193b51e60926d07c45ce8ca6450110623db643ad64",
+              "artifact_auditor/m30_published_auditor.py":
+                  "3964ffaf2c0c51ba15a637ee3c18897de966d4b32e7931aabdd0d52c97c7de59",
+              "tests/test_m30_published_auditor.py":
+                  "18c3e4716337bba35000a4c44aab2f334d9cb4af98365517f712ddadaa26130a",
+              "parsers/source_artifact.py":
+                  "dad32b37e8a14213d91c9bfb407129ebb077432a8a366ad6ddb9a78bc9a0d59e",
+              "parsers/json_artifact.py":
+                  "3164a5704404f6ef7a16cfd6954ec14c9b1c1c757da3e7584eb500798e071efb",
+              "schemas/registry.py":
+                  "4d17a350bccd27edaafe1736a70ee153da426556355ce113416dbe6b596a43f2",
+              "parsers/artifact_dispatch.py":
+                  "abc765e34efd27a532b1fca0c91fc1982dbadd0a6d3d34b619e31225895cf050",
+              "artifact_auditor/audit_report.py":
+                  "94c665e47257c8ed3b2df03844791fd0bdc415aad3791a8eea155114492ddfc2",
+              "trace_explorer/m30_published_trace_explorer.py":
+                  "986335318fac7dbc894ab18133645653e712944e2997aaaf484e1c7a46f1c879",
+          }
+
+          for path_value, expected in requirements.items():
+              target = Path(path_value)
+              if target.is_symlink() or not target.is_file():
+                  raise SystemExit(f"Required exact source is missing: {target}")
+              observed = sha256(target.read_bytes()).hexdigest()
+              if observed != expected:
+                  raise SystemExit(
+                      f"Source mismatch for {target}: {observed} != {expected}"
+                  )
+              print(f"Exact dependency: {target}: PASS")
+          PY
+
+      - name: Verify the exact upstream M30 package identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          archive = Path(
+              "upstream/artifacts/m30/packages/"
+              "frp-v3.2.0-m30-archival-release.tar.gz"
+          )
+          expected_length = 10_189_989
+          expected_digest = (
+              "05ea33f6f3f505d315af930c2d51779f7189905308473f32a57375e477069caa"
+          )
+
+          if archive.is_symlink() or not archive.is_file():
+              raise SystemExit("Exact FRP M30 archival package is missing")
+
+          raw = archive.read_bytes()
+          observed_digest = sha256(raw).hexdigest()
+
+          if len(raw) != expected_length:
+              raise SystemExit(
+                  f"M30 package length mismatch: {len(raw)} != {expected_length}"
+              )
+          if observed_digest != expected_digest:
+              raise SystemExit(
+                  f"M30 package digest mismatch: "
+                  f"{observed_digest} != {expected_digest}"
+              )
+
+          print("Exact FRP v3.2.0 / M30 package identity: PASS")
+          PY
+
+      - name: Install the complete M30 published Trace Explorer tests
+        working-directory: observatory
+        shell: bash
+        env:
+          TEST_SHA256: a9f37c8a13652dcd1aaa0beb68ac44e9b118af6f38e893ac4dce08031c77a24e
+          TEST_GZIP_BASE64: |
+            H4sIAAAAAAACA80ba3OjyPG7fwVF8kFKJC0gBMJVTsXZ6C5Orb1bXt/VJS4XNcwMMjkEHIO89l3tf0/PDCCBBoQfe4lq15ahp7un390Muq7fUFYwLUxzrbin
+            Gn1EuNByisg0TeIn7XJuaNk2iCN2T4l2kyNMtdVjFqc5zTWCCsRoMdN1/eQkzNON5vvhttjm1Pe1aJOleaGhJEkLVERpwk5Oymspq75tk6gogAG5GqdxTLGA
+            naEAVyguUZZFyVrCcJo4RoxRVt3/Lk9/pclFwgqUYLrK8zSfwBayGJiVi4onjqCCP0+eSnZRXkQhbNhHWxIVaT4Tv31Yy+FK8M/pNsf0Q4rFLibajyiOiPj+
+            GTa2ZR2oNnPDryVXXa1wjk40+EhqLcAc30cPdHIylngZvqcbxFrocrqOWJE/Vfg+VXcuKWIg/w1NivdpUgDrTTTthR8DRvMHBKw9XaakEhdXs09LNbdIN282
+            NwTWUnMibEUqQ9wLtlFMfBWu0owkWIm4WyonJ/759ft/XPy48ldXP15cf7y6XF3d+D+eX1+c/+3DSjvT9O+uP/nASg336fzmH2ChJ4SGmg9mESX+f1ia+A8o
+            3tKR+HnKrWKsTf/Cf58KTsCqrykYc6IhbbMtUBBT7Z+fP15N2T3KwBmyPP2PtFbhPdJzBDIw5E2G8ghoSN/g6KJQi1hUGqkkOqlMeywp8k8uSf5WX+Af0Njo
+            Z/o0PlWwv6GbgObjBjznB+AnmrypRYlkbBYVdMNGO+Cv3ayNim0Ww2/QQDE+ZPC2kxNBvUX47mRvqbgC6hBurLUMprSr77coJyI0jaoYMeN/vgdLGdf6WT3S
+            HEeMitBFKInAR0Ezl860SKeXroxcmLs/1YJ0mxCUP+00ws2BI/aFadIcvOqXbZRT5gtd+hvHD1CB732+fsRoHAoDuUoTuhMH36xUOux1xO9NNF0s00GGIDhN
+            +4Ng4FSL1gls7Rbl6ym/cNdQ2ZeouNc4jRnbBnynUg9n4uee+A/heSzMi2sEcmDXdE0fRwfAx3yz/dFlZBLbANtnhRbQnaLO+c2/yS0eLFewOsj75Xa5e/+1
+            Vjj7Ocp+SGLKmNxSymY0eYhycKs1rOiNA2PJWqj/1gv2FSxfgwwFLpuE0RpCJ9F5lJG2ueJ2cCi40kYvkoKuc5EJnmepl6azHz3QGnHn28u/u4xbBr6d0f5V
+            cLahxX1KaisG+f2Qvec3RjhmCiuFq7MSlZ8hsJyzPWHe9krorolkzzDO+hLYqE1y3MBTah1wHLeMFt1xy3tLMD9i/jqnNPFRwhNkwYVaejITKdyPCKTFqHjq
+            8uU9d7pgTS8St6p6Z4+ZWfpAcxTHPhO1QNMf2pXC7Hr1/uP3Vxf/Xv0dxPvh4u878LGKidUvWxT38CGDLGyrSVbfmM40zNZomkElg6SFTukjxVvxTUhXfyVt
+            ErFMCEAyURUWgtZMVhulvMOItsKMHubZDJiccSb9PSb9mklpArMHa2bOjG/Ka46++JDRrYXTYtIli2XguLYZEIxIEAYewoFn2B4lBvUWztxYhLYHV8nc8WyH
+            uqaHbNMygwVGoWWFDa6bJguZRdaYwlY3i9Lg83RbUM5MTqsUZPuS59eabCWCySHIvjVXYO0/IcsdZpXn2ln1adWcs5vr8/cQe3769OHj9eq6CT8+ovoBfiol
+            fWTjpTpgn5XAX7jdt+O+ZbWTYfvsXvYKDsr4WfU4z2alc33bMar2xId0LAM470LhB231HdJXurxC3GSQXIYaONR8QvVgjk159NvqkLAU02Qk+RlPNHNo/BLF
+            t1y3C/Oi2BTXeLFZIW2sGw10ymOWeZUWFwkgs9xpQWPoJ0EpUwZBHQI6ZlDaqhNRW5+8EYopBLWc4jQnPqaQKmV+/mXLAaLkAXIESJenb5m0KRkQ7KTIGkxU
+            JKDOLyaaPR64TLDEEpSx+7SoVs+t8WCqciPlwuUzFSx4njGOBHovqWBxjWtYsb0DfRtgVBPNApbH3W5Vl0h1QhZKINGa3+XphoCS8k2UgPdFeLD8u+NAo4I7
+            rFBs0zODuUOnnuksp4sQu1NkB4spDvA8sJeGOXfCV2f9krgyudvUoQYyMTHnBOMgdLCDAnuxXBiIhjgwPGKZVkjt5XIeWmThYAubnkECSm0rQCHpSe5lsCvN
+            sZTxnnXL1B4/vYGUVaTaGw0sukQUOzYygjkOXIcYS9ObL+eUOA6ZG06wpAuD4HlIAzcIltjBrmMvHUyWc7JwX6uF4yyqUw6ELia6CZkyZnmaFrc622420MPr
+            d7eH6blBopmH7/oyjlil9oyYkjWPa2Uf8TKNSU8/4Lfy/bL0q9iYaFVMaAhOGvH4AMvxgNFVkAgeDrlSzwOwF4IruMZ0sbTJdOFY1nRJTXdKbcNz5pYFVbCn
+            d8wSsEtM8K65bVnYXbhgbQsPGWCXC3CwxSJYLpeeZc9pEITgjUYAHkgszzAsw5jPraWrGjJMhjK+NC3PtAI89RYmAsZxMAXTXk4dKN2Ji128cEgX48hDAfWw
+            N/dgA5gQEwV4ubTxYhE6dO4tw4Vtz7HtmaZl04A4IUILGzuWG2DHc4jzKsY9CxlA35iG2MTTBbHxFCRGpoZnzW3XdfCcdjLu2SZxKLADXm16S5OY1LVD20Tu
+            EnlGaFHPMwIcIuDSQUtqBMixPNecu67lGK7zOonTpTEnHllOTde0wV5A7Aii6ZQiw7QwgfBJaBfjLg5xOHfmZBkC6MIFa/A8kHxIXMfES4saFig0CAw7BJOD
+            AI08cx4uDZsubAK7Os54T5Kk0Mk/+bu5DC8xEz6LiDLmF2lzlCCdqzMg7APVdejAGFeu0u8GxpfbZsDI0FOcIjIaD4gNd03hHI50mxs5KrwyWCmHLziFW1GC
+            ALxvllqVQpM91mmy3VCoZOlIWRGdHhmkVijPqi+KGWW/iHez731Jx9UjISVs87GRGh//CGnzAdlZqP+x2tPtbxWvX+86nEU8QMpzBJVzQuhjvblu6Azhn9Ga
+            lg3uWTdLMvqVVsnebUzvXd1AvNP7lw1pP2Z8z914xt1baCZFaVBxvXXtz1ALnwxEeWDB9egJmldoEAnFcck/EzUBUOPVQTWbeU0xICioHVbcOvBXcZUdzd6/
+            6QJQP9WgLdB5Nwtf9TCnEHHrAkl0KnB9/nXSg8DcQ2C+cxXrza/PG9Uca4JaCnhZLyT/mT2RKhUdPYRdPqQk25jKtp/5JPUT6ADZU1LcUxb9Co4SMRYla9/1
+            zTco1rsItxv4Sl1c6gPbdPed2W7Ju6gddCv17aoHrjqVagQJq8R0mwovgPbwZ/a2hXBvqK3Ym3E+JsNABbcDYcV+/ICCtT1vCQoLmqvCyjcv0WsLKX+3DL4T
+            js8JhsC1hgk7uDIO0EccFR2EexyvekoCriZHV9KeUL6mwuY2tc3FT+B6yZaZvvEMz1ObPygpgY4RvJvjn2ijqVkyPj4ZrqHTg8frfGwkpnDSOvifrLesAD/l
+            QLPsHhBDdskjwZ7YvpqtHiT1LEE6Zmm+r8QiLfq5SDKaEB4k5cOLF3LSRKJgpBXDsyxlkRgryunblnFzgrL9gfoJ3UKVEfsQxaGwKhGXg0heiXUVn1EuOv51
+            u1yvSjLzTmr51th7JFqj7VplKVb1h8lDj69Z69D78AUdQWsHr1JEb3iSKpqaxzLVTQ7txI5OpSRBh4xfLJqdAobKZm+F0nSfQaJDmp0UBohTyFL+N3piaZJW
+            jSoth+r1AxMSgentuQiIOYEvfZb/e4Q/WakoE2x3I9IT6561pkNRPc3GSAQfsGph4WDeAzqIKhjFKKFVtwAZDmFMM3G06njz8FxVHG9bqxJbsDbjrJVExIU9
+            FZZXmCrzqxL9Nyz6KlYgZs4e+BmKyVBo4QqiHx68RGZg/3jNuL9I6pSS/0n9x0OpTIwTjX9XaayGmfYAfYdiRqueSfzRjcrsItcTpXahx8coQ1A1PgmPYF8i
+            /giWd73gNHHVY7+1c/RMglrP3YYMhKpIV20kjjZRwSvqwUsro/HxPUrW0PjtPw4eTFcWypBUji0XCj1YTh/v0ZY1cu4x0vvqKidx/IS1+TIMhCbphs8BOY7l
+            y3D8Yjqw1vQsxRgyAbtLC9j7zqCE0YH1BBEB6hKo7jh+pXn6Bt39PuXjHRwwBeiqXC0Z0pspfwfcrJV20OqmL8sFACUH2NXw4AFbSFcPNA/j9MsxXsogOBh7
+            TqsxhEjEndiP9I0FqC1KHlAeIZByGKN1rT+RaPkUHXScITGw6VInfcxExQS1elMpuuRO9oi+SDmtqau+m5OI+RdTQylKACVcVRdmaQx7ArdUQrUaGiWMKsaq
+            NyC2uM0I/6WEgKJSbZcHYE2tKgCaRqV8hvzqUqeMCzuzSNCGB9VKy+Ou5aIVOVjNzYzbz8FZvd0bFaLITrf53rQiiyMQefzkMzntpq89qKcg1xRvz6ses0vT
+            8b/79P25/+l69en8+vzm4uOVv/pp9f4H/u21p03NBXCUVwlbeeJV5xNUyp8d8YP44LL+xvRee4Qgu39iEQaz3JcNekBRjIIoBoNX8ACUGU4z+k1oP08Ket/h
+            g4wKQdUHpXdPHyPmB0/FwJM5FSKIbL0v0MghmfpYtsLBJNL2SZq+YzZDhVzj7j8oNPBM0csOXfU/L605VD9seA6qI88uuk5r8YyWyGRbLhIlTShed+uyBPV7
+            ISPFO3LjdnwFSy7yxhh1oulN9fLxr6Frf9KcvfN1b0qyHpwZd0CrKtD1xoG+b0WwntQBZdlJgvNq7oF+WhMWAcrfEKv8NqdyMtOlIzE86ZgXGop54eB3fYa8
+            46NL9rWK/f3wdNr2Uf4KpWLoBgweFnvKOc3Z1DwKKaYzZ2Z7vtAUuqhY/GALNTbaZKLiawbLSugQNasjB0EkqqzuoCkctFMRNWBNsVScUjD7kzBuQo2bqqH/
+            maEKYDWtmrseak0igvTZqMHtZKz9ucmaeXqnovu2NlYPJyshkygMac5eYGyNeHSins3s77qUDN+3eox/etdvaV/yFCrz7lOc/b7dr7auSHfSfchBBt6zKuz+
+            D3Qn+dGkDLRNxDatd//eWJWv1qB8hA/lEn9yXz7wHxyc68V7OlScxbg1IUvwZ9Jn4un7t1JGpYKq+xQkv5k3ya2dKffLs2Itm3G/AnZ1p6KdgU4rQmyIKt5W
+            lHusaCUr2hfEKlkRDWo2wVqzZH8TwSrE0HH+qre9s1z/w8er7/3rH678m9WH1eXq5vpf/ufV5fnVzcX7z0cPP7bUJF++qGPm4Um93zfgVefpzo4dndsdmds7
+            MWeqDsrtH5AzDm8POhH3zJNwrzkBpxihqU+8mQOOXn2bQCRzwc5ENDnMJv9f6eAkCjVfDIR8Xzs703TfFwMbX5e81W9q86uj8cl/AUWPt4wIRQAA
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import gzip
+          import hashlib
+          import os
+          from pathlib import Path
+
+          target = Path("tests/test_m30_published_trace_explorer.py")
+          encoded = "".join(os.environ["TEST_GZIP_BASE64"].split())
+          compressed = base64.b64decode(encoded, validate=True)
+          source = gzip.decompress(compressed)
+          expected = os.environ["TEST_SHA256"]
+          observed = hashlib.sha256(source).hexdigest()
+
+          if observed != expected:
+              raise SystemExit(
+                  f"Decoded test digest mismatch: {observed} != {expected}"
+              )
+
+          target.parent.mkdir(parents=True, exist_ok=True)
+          target.write_bytes(source)
+
+          written = hashlib.sha256(target.read_bytes()).hexdigest()
+          if written != expected:
+              raise SystemExit(
+                  f"Written test digest mismatch: {written} != {expected}"
+              )
+
+          print(f"Installed complete tests: {target}")
+          print(f"test_sha256={expected}")
+          PY
+
+      - name: Validate exact M16 projection and complete Observatory regression
+        working-directory: observatory
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          archive="../upstream/artifacts/m30/packages/frp-v3.2.0-m30-archival-release.tar.gz"
+
+          python -m compileall -q \
+            artifact_auditor \
+            parsers \
+            schemas \
+            trace_explorer \
+            transition_visualizer \
+            tests
+
+          PYTHONPATH=. python -m artifact_auditor.m30_archive_intake \
+            --archive "$archive"
+          PYTHONPATH=. python -m artifact_auditor.m30_published_boundary_intake \
+            --archive "$archive"
+          PYTHONPATH=. python -m schemas.m30_published_registry \
+            --archive "$archive"
+          PYTHONPATH=. python -m parsers.m30_published_member_intake \
+            --archive "$archive"
+          PYTHONPATH=. python -m parsers.m30_published_dispatch \
+            --archive "$archive"
+          PYTHONPATH=. python -m artifact_auditor.m30_published_auditor \
+            --archive "$archive"
+          PYTHONPATH=. python -m trace_explorer.m30_published_trace_explorer \
+            --archive "$archive"
+
+          FRP_M30_ARCHIVE_PATH="$archive" PYTHONPATH=. python - <<'PY'
+          from artifact_auditor.audit_report import ValidationStatus
+          from schemas.m30_published_registry import (
+              PublishedMeasurementContour,
+          )
+          from schemas.registry import ObservatoryMode
+          from trace_explorer.m30_published_trace_explorer import (
+              explore_m30_published_archive,
+          )
+
+          archive = (
+              "../upstream/artifacts/m30/packages/"
+              "frp-v3.2.0-m30-archival-release.tar.gz"
+          )
+          result = explore_m30_published_archive(archive)
+
+          if result.audit_batch.overall_status is not (
+              ValidationStatus.RECOGNIZED_VALID
+          ):
+              raise SystemExit("M7B did not receive a green M6 audit batch")
+
+          if result.audit_batch.batch_sha256 != (
+              "aeb9c1d7390a3bc3d1d7ef35c5f3f110e195e9b7ac8d4a4f4636c47c0a99bd03"
+          ):
+              raise SystemExit("M6 audit batch identity changed")
+
+          if (
+              result.audit_batch.total_check_count,
+              result.audit_batch.failed_check_count,
+          ) != (69, 0):
+              raise SystemExit("M6 69-check evidence changed")
+
+          if result.member_id != "m16-fpga-preparation-execution-trace":
+              raise SystemExit("M7B selected the wrong published member")
+
+          registration = result.dispatch.member.registration
+
+          if registration.schema_identifier != (
+              "frp.m16.fpga_preparation_execution_trace.v2.1.0"
+          ):
+              raise SystemExit("M16 schema identifier changed")
+
+          if registration.source_path != (
+              "artifacts/m19/execution/"
+              "m16-fpga-preparation-execution-trace.json"
+          ):
+              raise SystemExit("M16 source path changed")
+
+          if registration.raw_sha256 != (
+              "7d58b6741bdcadbfb9acb9049ed0e956305f49b9ad36946e719a4121b5caf22f"
+          ):
+              raise SystemExit("M16 raw source identity changed")
+
+          if result.dispatch.dispatch_sha256 != (
+              "55e9c53f55cc5507e33271bfcdd2a48c751fd710b9fe8f9df972fc1c308f69b2"
+          ):
+              raise SystemExit("M5 Trace Explorer dispatch identity changed")
+
+          expected_dispatch = (
+              result.audit_batch.dispatch_batch.dispatch_for(
+                  "m16-fpga-preparation-execution-trace",
+                  ObservatoryMode.TRACE_EXPLORER,
+              )
+          )
+
+          if result.dispatch is not expected_dispatch:
+              raise SystemExit("M7B reconstructed the M5 dispatch route")
+
+          if result.dispatch.member is not result.audit_report.dispatch.member:
+              raise SystemExit("M6 and M7B do not share the exact M4 member")
+
+          if result.dispatch.source_artifact is not (
+              result.audit_report.dispatch.source_artifact
+          ):
+              raise SystemExit("M6 and M7B do not share exact source bytes")
+
+          trace_routes = (
+              result.audit_batch.dispatch_batch.dispatches_for_mode(
+                  ObservatoryMode.TRACE_EXPLORER
+              )
+          )
+
+          if len(trace_routes) != 1 or trace_routes[0] is not result.dispatch:
+              raise SystemExit("Trace Explorer route inventory changed")
+
+          if result.measurement_contour is not (
+              PublishedMeasurementContour.M16_FPGA_PREPARATION_EXECUTION
+          ):
+              raise SystemExit("M16 measurement contour changed or was aliased")
+
+          if (
+              result.record_count,
+              result.cell_snapshot_count,
+              result.request_count,
+          ) != (4, 32, 8):
+              raise SystemExit("M7B complete trace inventory changed")
+
+          if result.source_record_digest != (
+              "4b2e8aec64a0b3cb76d0819383ed66d306b8e50dc3feb7bb8c6c76486cd83d57"
+          ):
+              raise SystemExit("M16 source record digest changed")
+
+          if result.dataset_sha256 != (
+              "4e6e0a1cd13dccbf6c6ab45850aefcb09d212fe4883f2d56c2c190dbee42bafd"
+          ):
+              raise SystemExit("M7B deterministic dataset digest changed")
+
+          if result.trace_dataset_id != (
+              "4191b36e-9168-5fc7-a4b5-cbc3b480136f"
+          ):
+              raise SystemExit("M7B deterministic dataset identifier changed")
+
+          expected_record_ledger = (
+              (
+                  "c9f48870-584d-5622-8e17-e4096322b9a9",
+                  "c7d1c6a3422c7578e559a04b252fe55b8889243ebbfd130b0aed290020033287",
+              ),
+              (
+                  "812912bc-951a-56cb-86c8-6f49d7c7c56d",
+                  "a9abe9c939d1ccdd1abc884c55f6e398f5443c491124ebd6faa54c627bc696d6",
+              ),
+              (
+                  "92a09ab0-fc1c-5d4c-b25d-09234776c3ed",
+                  "941d6efaadc31981d1e74f41a78a90f2e990bcfa6966a8e0ba62971377260767",
+              ),
+              (
+                  "e803d9d8-1714-581a-a9d2-ea012cd42bde",
+                  "7cfcf363d8f2cd5730b99cddfd761c82e02812bb04f2b912fa913f804e54de99",
+              ),
+          )
+
+          if tuple(
+              (record.trace_record_id, record.source_record_sha256)
+              for record in result.records
+          ) != expected_record_ledger:
+              raise SystemExit("M7B record identity ledger changed")
+
+          if tuple(epoch.source_payload() for epoch in result.epochs) != (
+              {"epoch": 0, "mode": "free", "record_count": 3},
+              {"epoch": 1, "mode": "1/7", "record_count": 1},
+          ):
+              raise SystemExit("Execution epoch declarations changed")
+
+          if result.observed_scheduler_modes != ("free", "1/7"):
+              raise SystemExit("Source-observed scheduler modes changed")
+
+          if "7/1" in result.observed_scheduler_modes:
+              raise SystemExit("M7B synthesized an unobserved 7/1 record")
+
+          if tuple(
+              (
+                  record.scheduler.mode,
+                  record.scheduler.state,
+                  record.scheduler.ticks_before,
+                  record.scheduler.ticks_after,
+              )
+              for record in result.records
+          ) != (
+              ("free", "free", 0, 1),
+              ("free", "free", 1, 2),
+              ("free", "free", 2, 3),
+              ("1/7", "excite", 0, 1),
+          ):
+              raise SystemExit("Exact scheduler snapshots changed")
+
+          if result.observed_ternary_domain != (-1, 0, 1):
+              raise SystemExit("Ternary domain is not exactly -1/0/1")
+
+          first_leg = result.records[1].cells[0]
+          completion = result.records[2].cells[0]
+
+          if (
+              first_leg.retained_state_before,
+              first_leg.retained_state_after,
+              first_leg.pending_route_after,
+              first_leg.neutral_routed,
+          ) != (1, 0, -1, True):
+              raise SystemExit("Active-neutral first route leg changed")
+
+          if (
+              completion.retained_state_before,
+              completion.pending_route_before,
+              completion.retained_state_after,
+              completion.pending_route_after,
+          ) != (0, -1, -1, 0):
+              raise SystemExit("Pending route completion changed")
+
+          if any(
+              (
+                  cell.retained_state_before,
+                  cell.retained_state_after,
+              ) in ((-1, 1), (1, -1))
+              for record in result.records
+              for cell in record.cells
+          ):
+              raise SystemExit("M7B contains a direct opposite transition")
+
+          if result.event_totals != (
+              ("actual_direct_events", 0),
+              ("neutral_routed_events", 1),
+              ("prevented_direct_events", 1),
+              ("queue_overflow_events", 0),
+              ("requested_direct_events", 1),
+              ("reserved_state_events", 0),
+          ):
+              raise SystemExit("Exact event totals changed")
+
+          expected_invariants = (
+              "state_domain_valid",
+              "scheduler_counts_valid",
+              "request_lane_order_valid",
+              "pending_polarity_valid",
+              "active_neutral_valid",
+              "transition_capacity_valid",
+              "state_update_valid",
+              "no_actual_direct_events",
+              "no_reserved_state",
+              "no_queue_overflow",
+          )
+
+          if any(
+              record.invariant_names != expected_invariants
+              or not record.invariant_all_pass
+              for record in result.records
+          ):
+              raise SystemExit("Invariant vector changed or failed")
+
+          if any(
+              (
+                  record.capacity_limit,
+                  record.accepted_changes,
+                  record.capacity_remaining,
+                  record.capacity_exhausted,
+                  record.switch_load_numerator,
+                  record.switch_load_denominator,
+                  record.switch_load_q16,
+              ) != (2, 1, 1, False, 1, 8, 8192)
+              for record in result.records
+          ):
+              raise SystemExit("Capacity or switch-load relation changed")
+
+          if (
+              result.m15_correlation_status != "not_evaluated_in_m19"
+              or result.physical_measurement_availability != "not_in_scope"
+              or result.physical_measurement_correlation_status
+              != "not_evaluated"
+          ):
+              raise SystemExit(
+                  "M7B conflated execution, semantic, or physical contours"
+              )
+
+          contract = result.audit_batch.report_for_member(
+              "m28-trace-observatory-upstream-contract"
+          ).dispatch.parsed_artifact.root
+
+          global_core = contract["immutable_core"]
+
+          if global_core["balanced_ternary_notation"] != "-1/0/1":
+              raise SystemExit("Immutable kernel notation changed")
+
+          if global_core["semantic_values"] != (-1, 0, 1):
+              raise SystemExit("Immutable ternary values changed")
+
+          if global_core["active_neutral_state"] != 0:
+              raise SystemExit("Immutable active neutral state changed")
+
+          if global_core["temporal_scheduler_modes"] != ("1/7", "7/1"):
+              raise SystemExit("Immutable scheduler order changed")
+
+          direction = contract["integration_direction"]
+
+          if direction["direction"] != "upstream_to_downstream_only":
+              raise SystemExit("Observatory integration direction changed")
+
+          if direction["downstream_source_mutation"] != "forbidden":
+              raise SystemExit("Downstream source mutation became allowed")
+
+          if direction["downstream_writeback"] != "forbidden":
+              raise SystemExit("Downstream writeback became allowed")
+
+          repeated = explore_m30_published_archive(archive)
+
+          if repeated.dataset_sha256 != result.dataset_sha256:
+              raise SystemExit("Repeated M7B projection digest changed")
+
+          if repeated.trace_dataset_id != result.trace_dataset_id:
+              raise SystemExit("Repeated M7B projection identifier changed")
+
+          print("Exact M16 M7 Trace Explorer qualification: PASS")
+          print("M6 batch and M5 Trace Explorer route binding: VERIFIED")
+          print("Four records, 32 cell snapshots, eight requests: RETAINED")
+          print("Balanced ternary kernel -1/0/1: RETAINED")
+          print("Active neutral state 0 routing: RETAINED")
+          print("Observed free and 1/7 source records: RETAINED")
+          print("Unobserved 7/1 record synthesis: FORBIDDEN")
+          print("Global scheduler order 1/7 and 7/1: RETAINED")
+          print("Execution, semantic, and physical contours: SEPARATE")
+          print("Source mutation, normalization, and writeback: FORBIDDEN")
+          PY
+
+          FRP_M30_ARCHIVE_PATH="$archive" \
+            PYTHONPATH=. \
+            python -m unittest -v \
+            tests.test_m30_published_trace_explorer \
+            2>&1 | tee m7b-focused-tests.log
+
+          grep -F "Ran 29 tests" m7b-focused-tests.log
+          grep -Fx "OK" m7b-focused-tests.log
+          rm m7b-focused-tests.log
+
+          FRP_M30_ARCHIVE_PATH="$archive" \
+            PYTHONPATH=. \
+            python -m unittest discover -s tests -v \
+            2>&1 | tee m7b-all-tests.log
+
+          grep -F "Ran 406 tests" m7b-all-tests.log
+          grep -Fx "OK" m7b-all-tests.log
+          rm m7b-all-tests.log
+
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          archive = Path(
+              "../upstream/artifacts/m30/packages/"
+              "frp-v3.2.0-m30-archival-release.tar.gz"
+          )
+          expected = (
+              "05ea33f6f3f505d315af930c2d51779f7189905308473f32a57375e477069caa"
+          )
+          observed = sha256(archive.read_bytes()).hexdigest()
+
+          if observed != expected:
+              raise SystemExit("Upstream archive changed during M7B validation")
+
+          print("Read-only upstream archive after M7B: VERIFIED")
+          PY
+
+      - name: Commit the complete M30 published Trace Explorer tests
+        working-directory: observatory
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          target="tests/test_m30_published_trace_explorer.py"
+
+          git diff --check -- "$target"
+          git add -- "$target"
+
+          if git diff --cached --quiet; then
+            echo "The exact M30 published Trace Explorer tests are already current."
+            exit 0
+          fi
+
+          unexpected="$(
+            git diff --cached --name-only |
+              grep -Ev '^tests/test_m30_published_trace_explorer.py$' ||
+              true
+          )"
+
+          if [[ -n "$unexpected" ]]; then
+            echo "Unexpected staged paths:"
+            printf '%s\n' "$unexpected"
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git commit \
+            -m "Qualify M30 published Trace Explorer" \
+            -m "Add the complete deterministic M16 Trace Explorer qualification suite covering exact source identity, -1/0/1 states, active-neutral routing, observed scheduler records, immutable 1/7 and 7/1 global order, source coordinates, separate measurement contours, repeated projection identity, and the upstream-only no-writeback boundary."
+
+          git push origin HEAD:main
