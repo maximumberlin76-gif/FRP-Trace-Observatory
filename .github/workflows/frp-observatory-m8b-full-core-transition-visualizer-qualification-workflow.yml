@@ -1,0 +1,446 @@
+name: FRP Observatory M8B Full Core Transition Visualizer Qualification Bootstrap
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: frp-observatory-m8b-transition-visualizer-qualification-main
+  cancel-in-progress: false
+
+jobs:
+  qualify-full-core-transition-visualizer:
+    name: Qualify exact M8 full-core Transition Visualizer
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out Observatory main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: observatory
+
+      - name: Check out FRP upstream main read-only
+        uses: actions/checkout@v4
+        with:
+          repository: maximumberlin76-gif/Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor
+          ref: main
+          path: upstream
+          persist-credentials: false
+
+      - name: Set up exact Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Require manual main-branch execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]]; then
+            echo "This workflow must be started manually."
+            exit 1
+          fi
+          if [[ "$GITHUB_REF_NAME" != "main" ]]; then
+            echo "Run this workflow manually from Branch: main."
+            exit 1
+          fi
+
+      - name: Verify exact M8 source and FRP upstream boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          requirements = {
+              Path(
+                  "observatory/transition_visualizer/"
+                  "m30_published_transition_visualizer.py"
+              ): (
+                  "c8fab9a1f6091122043d297fab9419c2"
+                  "1ea4b21b49bc2da0da132fa2662386dc"
+              ),
+              Path(
+                  "observatory/trace_explorer/"
+                  "m30_published_trace_explorer.py"
+              ): (
+                  "986335318fac7dbc894ab18133645653"
+                  "e712944e2997aaaf484e1c7a46f1c879"
+              ),
+              Path(
+                  "upstream/.github/workflows/"
+                  "frp-m30-observatory-full-core-trace-"
+                  "qualification-workflow.yml"
+              ): (
+                  "01ca22bc98f63d9d4ea4a58299d53ff"
+                  "58b410f3f2db94b81097d7cef3ad4dee7"
+              ),
+          }
+          for target, expected in requirements.items():
+              if target.is_symlink() or not target.is_file():
+                  raise SystemExit(f"Exact prerequisite is missing: {target}")
+              observed = sha256(target.read_bytes()).hexdigest()
+              if observed != expected:
+                  raise SystemExit(
+                      f"Prerequisite mismatch for {target}: "
+                      f"{observed} != {expected}"
+                  )
+
+          archive = Path(
+              "upstream/artifacts/m30/packages/"
+              "frp-v3.2.0-m30-archival-release.tar.gz"
+          )
+          if archive.is_symlink() or not archive.is_file():
+              raise SystemExit("Exact M30 archival release is missing")
+          raw = archive.read_bytes()
+          expected_length = 10_189_989
+          expected_sha256 = (
+              "05ea33f6f3f505d315af930c2d51779f"
+              "7189905308473f32a57375e477069caa"
+          )
+          observed_sha256 = sha256(raw).hexdigest()
+          if len(raw) != expected_length:
+              raise SystemExit(
+                  f"M30 archive length mismatch: "
+                  f"{len(raw)} != {expected_length}"
+              )
+          if observed_sha256 != expected_sha256:
+              raise SystemExit(
+                  f"M30 archive digest mismatch: "
+                  f"{observed_sha256} != {expected_sha256}"
+              )
+
+          test_target = Path(
+              "observatory/tests/"
+              "test_m30_published_transition_visualizer.py"
+          )
+          if test_target.is_symlink():
+              raise SystemExit("M8 qualification test target is a symlink")
+
+          print("Exact M8 source boundary: PASS")
+          print("Exact FRP M30 upstream boundary: PASS")
+          PY
+
+      - name: Install complete M8 full-core qualification tests
+        working-directory: observatory
+        shell: bash
+        env:
+          TEST_BASE64_LENGTH: "6808"
+          TEST_BASE64_SHA256: 583e8741f3a888febf8c13056070db11b28e7c89d4ea4fde76277168aff0783e
+          TEST_XZ_LENGTH: "5104"
+          TEST_XZ_SHA256: 5c7f4c24f091a5b1b6617fb4ae245d15c3a89b908b72cddec8c53ad57304c896
+          TEST_SOURCE_LENGTH: "23523"
+          TEST_SOURCE_LINES: "652"
+          TEST_SOURCE_SHA256: a0ff2ae46e8dc474683cfb18cbed5a7aa670dfb40635efd96befc29ef0b2628c
+          TEST_XZ_BASE64: |
+            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
+            AARZWg==
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import hashlib
+          import lzma
+          import os
+          from pathlib import Path
+
+          encoded = "".join(os.environ["TEST_XZ_BASE64"].split())
+          expected_encoded_length = int(
+              os.environ["TEST_BASE64_LENGTH"]
+          )
+          expected_encoded_sha256 = os.environ[
+              "TEST_BASE64_SHA256"
+          ]
+          observed_encoded_sha256 = hashlib.sha256(
+              encoded.encode("ascii")
+          ).hexdigest()
+          if len(encoded) != expected_encoded_length:
+              raise SystemExit(
+                  "Test payload length mismatch: "
+                  f"{len(encoded)} != {expected_encoded_length}"
+              )
+          if observed_encoded_sha256 != expected_encoded_sha256:
+              raise SystemExit(
+                  "Test payload digest mismatch: "
+                  f"{observed_encoded_sha256} != "
+                  f"{expected_encoded_sha256}"
+              )
+
+          compressed = base64.b64decode(encoded, validate=True)
+          expected_compressed_length = int(
+              os.environ["TEST_XZ_LENGTH"]
+          )
+          expected_compressed_sha256 = os.environ["TEST_XZ_SHA256"]
+          observed_compressed_sha256 = hashlib.sha256(
+              compressed
+          ).hexdigest()
+          if len(compressed) != expected_compressed_length:
+              raise SystemExit(
+                  "Compressed test length mismatch: "
+                  f"{len(compressed)} != {expected_compressed_length}"
+              )
+          if (
+              observed_compressed_sha256
+              != expected_compressed_sha256
+          ):
+              raise SystemExit(
+                  "Compressed test digest mismatch: "
+                  f"{observed_compressed_sha256} != "
+                  f"{expected_compressed_sha256}"
+              )
+
+          source = lzma.decompress(
+              compressed,
+              format=lzma.FORMAT_XZ,
+          )
+          expected_source_length = int(
+              os.environ["TEST_SOURCE_LENGTH"]
+          )
+          expected_source_lines = int(
+              os.environ["TEST_SOURCE_LINES"]
+          )
+          expected_source_sha256 = os.environ["TEST_SOURCE_SHA256"]
+          observed_source_sha256 = hashlib.sha256(source).hexdigest()
+          if len(source) != expected_source_length:
+              raise SystemExit(
+                  "Decoded test length mismatch: "
+                  f"{len(source)} != {expected_source_length}"
+              )
+          if len(source.splitlines()) != expected_source_lines:
+              raise SystemExit(
+                  "Decoded test line-count mismatch: "
+                  f"{len(source.splitlines())} != "
+                  f"{expected_source_lines}"
+              )
+          if observed_source_sha256 != expected_source_sha256:
+              raise SystemExit(
+                  "Decoded test digest mismatch: "
+                  f"{observed_source_sha256} != "
+                  f"{expected_source_sha256}"
+              )
+
+          target = Path(
+              "tests/test_m30_published_transition_visualizer.py"
+          )
+          if target.is_symlink():
+              raise SystemExit("M8 qualification test target is a symlink")
+          target.write_bytes(source)
+
+          written_sha256 = hashlib.sha256(
+              target.read_bytes()
+          ).hexdigest()
+          if written_sha256 != expected_source_sha256:
+              raise SystemExit(
+                  "Written M8 qualification test digest mismatch"
+              )
+
+          print("Complete M8 qualification tests: INSTALLED")
+          print(f"test_bytes={len(source)}")
+          print(f"test_lines={len(source.splitlines())}")
+          print(f"test_sha256={written_sha256}")
+          PY
+
+      - name: Run focused M8 qualification and complete regression
+        working-directory: observatory
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          archive="../upstream/artifacts/m30/packages/frp-v3.2.0-m30-archival-release.tar.gz"
+
+          python -m compileall -q \
+            artifact_auditor \
+            parsers \
+            schemas \
+            trace_explorer \
+            transition_visualizer \
+            tests
+
+          PYTHONPATH=. python -m \
+            transition_visualizer.m30_published_transition_visualizer \
+            --archive "$archive" \
+            2>&1 | tee m8-source-output.log
+
+          grep -Fx "trace_sources=2" m8-source-output.log
+          grep -Fx "trace_records=100" m8-source-output.log
+          grep -Fx "transition_frames=800" m8-source-output.log
+          grep -Fx "balanced_ternary_notation=-1/0/1" \
+            m8-source-output.log
+          grep -Fx "active_neutral_state=0" m8-source-output.log
+          grep -Fx "temporal_scheduler_modes=1/7,7/1" \
+            m8-source-output.log
+          grep -Fx \
+            "dataset_sha256=7325fb188fd7709f28dda06765decaa29ac942895e4772b747291aec29ad3f2b" \
+            m8-source-output.log
+          rm m8-source-output.log
+
+          FRP_M30_ARCHIVE_PATH="$archive" \
+            PYTHONPATH=. \
+            python -m unittest -v \
+            tests.test_m30_published_transition_visualizer \
+            2>&1 | tee m8-focused-tests.log
+
+          grep -F "Ran 41 tests" m8-focused-tests.log
+          grep -Fx "OK" m8-focused-tests.log
+          rm m8-focused-tests.log
+
+          FRP_M30_ARCHIVE_PATH="$archive" \
+            PYTHONPATH=. \
+            python -m unittest discover -s tests -v \
+            2>&1 | tee m8-all-tests.log
+
+          grep -F "Ran 447 tests" m8-all-tests.log
+          grep -Fx "OK" m8-all-tests.log
+          rm m8-all-tests.log
+
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          expectations = {
+              Path(
+                  "transition_visualizer/"
+                  "m30_published_transition_visualizer.py"
+              ): (
+                  "c8fab9a1f6091122043d297fab9419c2"
+                  "1ea4b21b49bc2da0da132fa2662386dc"
+              ),
+              Path(
+                  "tests/"
+                  "test_m30_published_transition_visualizer.py"
+              ): (
+                  "a0ff2ae46e8dc474683cfb18cbed5a7"
+                  "aa670dfb40635efd96befc29ef0b2628c"
+              ),
+              Path(
+                  "../upstream/artifacts/m30/packages/"
+                  "frp-v3.2.0-m30-archival-release.tar.gz"
+              ): (
+                  "05ea33f6f3f505d315af930c2d51779f"
+                  "7189905308473f32a57375e477069caa"
+              ),
+          }
+          for target, expected in expectations.items():
+              observed = sha256(target.read_bytes()).hexdigest()
+              if observed != expected:
+                  raise SystemExit(
+                      f"Post-validation identity mismatch for {target}: "
+                      f"{observed} != {expected}"
+                  )
+
+          print("M8 focused qualification: 41 TESTS PASS")
+          print("Complete Observatory regression: 447 TESTS PASS")
+          print("Balanced ternary kernel -1/0/1: RETAINED")
+          print("Active neutral state 0: RETAINED")
+          print("Scheduler modes 1/7 and 7/1: RETAINED")
+          print("FRP upstream remained read-only: VERIFIED")
+          PY
+
+      - name: Commit complete M8 qualification tests
+        working-directory: observatory
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          target="tests/test_m30_published_transition_visualizer.py"
+
+          git diff --check -- "$target"
+          git add -- "$target"
+
+          if git diff --cached --quiet; then
+            echo "Exact M8 qualification tests are already current."
+            exit 0
+          fi
+
+          unexpected="$(
+            git diff --cached --name-only |
+              grep -Ev '^tests/test_m30_published_transition_visualizer\.py$' ||
+              true
+          )"
+          if [[ -n "$unexpected" ]]; then
+            echo "Unexpected staged paths:"
+            printf '%s\n' "$unexpected"
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git commit \
+            -m "Add Observatory M8 full-core qualification tests" \
+            -m "Add 41 deterministic qualification tests for the complete M8 Transition Visualizer boundary, both distinct M16 trace contours, exact -1/0/1 kernel semantics, active neutral 0, scheduler modes 1/7 and 7/1, neutral-mediated routing, M27 telemetry semantics, M28 cross-links, deterministic identities, immutability, and read-only FRP upstream handling. The complete Observatory regression passes 447 tests."
+
+          git push origin HEAD:main
