@@ -1,0 +1,715 @@
+name: FRP Observatory M8A Full Core Transition Visualizer Source Bootstrap
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: frp-observatory-m8a-full-core-transition-visualizer-source-main
+  cancel-in-progress: false
+
+jobs:
+  bootstrap-full-core-transition-visualizer-source:
+    name: Bootstrap the exact M16 full-core Transition Visualizer source
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out Observatory main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: observatory
+
+      - name: Check out FRP upstream main read-only
+        uses: actions/checkout@v4
+        with:
+          repository: maximumberlin76-gif/Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor
+          ref: main
+          path: upstream
+          persist-credentials: false
+
+      - name: Set up exact Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Require manual main-branch execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]]; then
+            echo "This workflow must be started manually."
+            exit 1
+          fi
+          if [[ "$GITHUB_REF_NAME" != "main" ]]; then
+            echo "Run this workflow manually from Branch: main."
+            exit 1
+          fi
+
+      - name: Require exact green M1 through M7 dependencies
+        working-directory: observatory
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          requirements = {
+              "artifact_auditor/m30_archive_intake.py":
+                  "d1101f5baf74fdcea4d08a14e7b21e1a6657ca19eb29d8387aba15f3ac5d904d",
+              "artifact_auditor/m30_published_boundary_intake.py":
+                  "4b1f580596425b15dd4548c30336db45a14b7aad4285feeb7cb490edc20b4b42",
+              "schemas/m30_published_registry.py":
+                  "d2769b3444a836e17e41a47fd34ca9c792d0897cb68e345ed4f622ff72ec8ab0",
+              "tests/test_m30_published_registry.py":
+                  "310f5e50a06d3e36603d49114741f6f87622d2b9f419773aabe1b2c9facadb99",
+              "parsers/m30_published_member_intake.py":
+                  "827af9233facfee466606163589c0b068d107b05e6bb8cbff4245409a09c367a",
+              "tests/test_m30_published_member_intake.py":
+                  "873bfa4c0d163b6a1b0df09873cdec6ecb39f12d496f49a76ec98bc5cda02c9e",
+              "parsers/m30_published_dispatch.py":
+                  "ba65c7cc1ad6d483dc1bbb09c729a165074280581f988f5a272c5e1289a33d50",
+              "tests/test_m30_published_dispatch.py":
+                  "a2ac6b0b5c6112756d0bec193b51e60926d07c45ce8ca6450110623db643ad64",
+              "artifact_auditor/m30_published_auditor.py":
+                  "3964ffaf2c0c51ba15a637ee3c18897de966d4b32e7931aabdd0d52c97c7de59",
+              "tests/test_m30_published_auditor.py":
+                  "18c3e4716337bba35000a4c44aab2f334d9cb4af98365517f712ddadaa26130a",
+              "parsers/source_artifact.py":
+                  "dad32b37e8a14213d91c9bfb407129ebb077432a8a366ad6ddb9a78bc9a0d59e",
+              "parsers/json_artifact.py":
+                  "3164a5704404f6ef7a16cfd6954ec14c9b1c1c757da3e7584eb500798e071efb",
+              "schemas/registry.py":
+                  "4d17a350bccd27edaafe1736a70ee153da426556355ce113416dbe6b596a43f2",
+              "parsers/artifact_dispatch.py":
+                  "abc765e34efd27a532b1fca0c91fc1982dbadd0a6d3d34b619e31225895cf050",
+              "artifact_auditor/audit_report.py":
+                  "94c665e47257c8ed3b2df03844791fd0bdc415aad3791a8eea155114492ddfc2",
+              "trace_explorer/m30_published_trace_explorer.py":
+                  "986335318fac7dbc894ab18133645653e712944e2997aaaf484e1c7a46f1c879",
+              "tests/test_m30_published_trace_explorer.py":
+                  "a9f37c8a13652dcd1aaa0beb68ac44e9b118af6f38e893ac4dce08031c77a24e",
+          }
+
+          for path_value, expected in requirements.items():
+              target = Path(path_value)
+              if target.is_symlink() or not target.is_file():
+                  raise SystemExit(f"Required exact dependency is missing: {target}")
+              observed = sha256(target.read_bytes()).hexdigest()
+              if observed != expected:
+                  raise SystemExit(
+                      f"Dependency mismatch for {target}: "
+                      f"{observed} != {expected}"
+                  )
+              print(f"Exact dependency: {target}: PASS")
+          PY
+
+      - name: Verify the exact green upstream full-core boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          archive = Path(
+              "upstream/artifacts/m30/packages/"
+              "frp-v3.2.0-m30-archival-release.tar.gz"
+          )
+          workflow = Path(
+              "upstream/.github/workflows/"
+              "frp-m30-observatory-full-core-trace-"
+              "qualification-workflow.yml"
+          )
+
+          expected_archive_length = 10_189_989
+          expected_archive_sha256 = (
+              "05ea33f6f3f505d315af930c2d51779f7189905308473f32a57375e477069caa"
+          )
+          expected_workflow_sha256 = (
+              "01ca22bc98f63d9d4ea4a58299d53ff58b410f3f2db94b81097d7cef3ad4dee7"
+          )
+
+          for target, label in (
+              (archive, "M30 archival release"),
+              (workflow, "M30 full-core qualification workflow"),
+          ):
+              if target.is_symlink() or not target.is_file():
+                  raise SystemExit(f"Exact {label} is missing: {target}")
+
+          archive_raw = archive.read_bytes()
+          observed_archive_sha256 = sha256(archive_raw).hexdigest()
+          observed_workflow_sha256 = sha256(workflow.read_bytes()).hexdigest()
+
+          if len(archive_raw) != expected_archive_length:
+              raise SystemExit(
+                  "M30 package length mismatch: "
+                  f"{len(archive_raw)} != {expected_archive_length}"
+              )
+          if observed_archive_sha256 != expected_archive_sha256:
+              raise SystemExit(
+                  "M30 package digest mismatch: "
+                  f"{observed_archive_sha256} != "
+                  f"{expected_archive_sha256}"
+              )
+          if observed_workflow_sha256 != expected_workflow_sha256:
+              raise SystemExit(
+                  "Full-core workflow digest mismatch: "
+                  f"{observed_workflow_sha256} != "
+                  f"{expected_workflow_sha256}"
+              )
+
+          print("Exact FRP v3.2.0 / M30 package identity: PASS")
+          print("Exact green full-core qualification boundary: PASS")
+          PY
+
+      - name: Install the complete M30 full-core Transition Visualizer source
+        working-directory: observatory
+        shell: bash
+        env:
+          MODULE_SHA256: c8fab9a1f6091122043d297fab9419c21ea4b21b49bc2da0da132fa2662386dc
+          MODULE_GZIP_BASE64: |
+            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
+            HQLjGu39L1Z0WgzEbwEA
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import gzip
+          import hashlib
+          import os
+          from pathlib import Path
+
+          target = Path(
+              "transition_visualizer/"
+              "m30_published_transition_visualizer.py"
+          )
+          encoded = "".join(os.environ["MODULE_GZIP_BASE64"].split())
+          compressed = base64.b64decode(encoded, validate=True)
+          source = gzip.decompress(compressed)
+          expected = os.environ["MODULE_SHA256"]
+          observed = hashlib.sha256(source).hexdigest()
+
+          if observed != expected:
+              raise SystemExit(
+                  f"Decoded module digest mismatch: {observed} != {expected}"
+              )
+
+          target.parent.mkdir(parents=True, exist_ok=True)
+          target.write_bytes(source)
+
+          written = hashlib.sha256(target.read_bytes()).hexdigest()
+          if written != expected:
+              raise SystemExit(
+                  f"Written module digest mismatch: {written} != {expected}"
+              )
+
+          print(f"Installed exact M8 source: {target}")
+          print(f"source_sha256={expected}")
+          PY
+
+      - name: Validate the exact full-core Transition Visualizer source
+        working-directory: observatory
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          archive="../upstream/artifacts/m30/packages/frp-v3.2.0-m30-archival-release.tar.gz"
+
+          python -m compileall -q \
+            artifact_auditor \
+            parsers \
+            schemas \
+            trace_explorer \
+            transition_visualizer \
+            tests
+
+          PYTHONPATH=. python \
+            -m transition_visualizer.m30_published_transition_visualizer \
+            --archive "$archive" \
+            2>&1 | tee m8a-source.log
+
+          grep -Fx \
+            "FRP Observatory M8 full-core Transition Visualizer: PASS" \
+            m8a-source.log
+          grep -Fx "trace_sources=2" m8a-source.log
+          grep -Fx "trace_records=100" m8a-source.log
+          grep -Fx "transition_frames=800" m8a-source.log
+          grep -Fx "telemetry_semantics=6" m8a-source.log
+          grep -Fx "balanced_ternary_notation=-1/0/1" m8a-source.log
+          grep -Fx "active_neutral_state=0" m8a-source.log
+          grep -Fx "temporal_scheduler_modes=1/7,7/1" m8a-source.log
+          grep -Fx "observed_scheduler_modes=free,7/1,1/7" m8a-source.log
+          grep -Fx \
+            "scheduler_mode_record_counts=(('free', 19), ('1/7', 17), ('7/1', 64))" \
+            m8a-source.log
+          grep -Fx \
+            "scheduler_state_record_counts=(('free', 19), ('balance', 56), ('commit', 8), ('excite', 3), ('neutralize', 14))" \
+            m8a-source.log
+          grep -Fx "observed_ternary_domain=-1/0/1" m8a-source.log
+          grep -Fx \
+            "transition_classification_counts=(('same_state_retention', 783), ('polarity_to_neutral_transition', 5), ('neutral_to_polarity_transition', 12))" \
+            m8a-source.log
+          grep -Fx \
+            "route_leg_counts=(('non_route_transition', 790), ('first_leg_neutralization', 5), ('pending_route_completion', 5))" \
+            m8a-source.log
+          grep -Fx \
+            "dataset_sha256=7325fb188fd7709f28dda06765decaa29ac942895e4772b747291aec29ad3f2b" \
+            m8a-source.log
+          grep -Fx \
+            "visualizer_dataset_id=68de3476-2e03-5506-93ea-062c3744e90d" \
+            m8a-source.log
+          rm m8a-source.log
+
+          FRP_M30_ARCHIVE_PATH="$archive" PYTHONPATH=. python - <<'PY'
+          from artifact_auditor.audit_report import ValidationStatus
+          from transition_visualizer.m30_published_transition_visualizer import (
+              visualize_m30_published_archive,
+          )
+
+          archive = (
+              "../upstream/artifacts/m30/packages/"
+              "frp-v3.2.0-m30-archival-release.tar.gz"
+          )
+          result = visualize_m30_published_archive(archive)
+
+          if result.audit_batch.overall_status is not (
+              ValidationStatus.RECOGNIZED_VALID
+          ):
+              raise SystemExit("M8A did not receive a green M6 audit batch")
+          if result.audit_batch.batch_sha256 != (
+              "aeb9c1d7390a3bc3d1d7ef35c5f3f110e195e9b7ac8d4a4f4636c47c0a99bd03"
+          ):
+              raise SystemExit("M6 audit batch identity changed")
+          if (
+              result.audit_batch.total_check_count,
+              result.audit_batch.failed_check_count,
+          ) != (69, 0):
+              raise SystemExit("M6 audit evidence changed")
+
+          evidence = result.full_core_evidence
+          if evidence.evidence_sha256 != (
+              "b481d787fdef17992ed3236b4a7b1b142634b944ebb0048f4b77d3def089edd2"
+          ):
+              raise SystemExit("Full-core evidence digest changed")
+          if evidence.evidence_id != (
+              "7c935011-c734-5f6b-b312-dc476ad99724"
+          ):
+              raise SystemExit("Full-core evidence identifier changed")
+
+          expected_sources = (
+              (
+                  "m16-rtl-execution",
+                  "4a80e8e1-55cf-5010-b9ed-d3fa559f1549",
+                  "m16_rtl_execution",
+                  "d7945e0d2b5aaa05c5fff2e4e60d3b984017f7e4ae1984c55920368a110020bd",
+                  96,
+                  768,
+              ),
+              (
+                  "m16-fpga-preparation-execution",
+                  "166d7316-cd41-5289-b70a-e3af5ec37415",
+                  "m16_fpga_preparation_execution",
+                  "7d58b6741bdcadbfb9acb9049ed0e956305f49b9ad36946e719a4121b5caf22f",
+                  4,
+                  32,
+              ),
+          )
+          observed_sources = tuple(
+              (
+                  source.dataset_id,
+                  source.trace_source_id,
+                  source.measurement_contour,
+                  source.raw_sha256,
+                  len(source.records),
+                  sum(len(record.cells) for record in source.records),
+              )
+              for source in evidence.trace_sources
+          )
+          if observed_sources != expected_sources:
+              raise SystemExit("Separate M16 trace contours changed")
+
+          if result.trace_dataset.dataset_sha256 != (
+              "4e6e0a1cd13dccbf6c6ab45850aefcb09d212fe4883f2d56c2c190dbee42bafd"
+          ):
+              raise SystemExit("M7 Trace Explorer dataset identity changed")
+          if result.trace_dataset.trace_dataset_id != (
+              "4191b36e-9168-5fc7-a4b5-cbc3b480136f"
+          ):
+              raise SystemExit("M7 Trace Explorer identifier changed")
+          if result.m16_dispatch.dispatch_sha256 != (
+              "204c63f20db49a7d946b0963058db148fe43bb715c353c74ac4f6b203e4e792f"
+          ):
+              raise SystemExit("M5 M16 visualizer route changed")
+          if result.m27_dispatch.dispatch_sha256 != (
+              "b17c84a8adc66205f75d8ae81053b181ba585647e8a5e29764f0d6ec062d4d21"
+          ):
+              raise SystemExit("M5 M27 visualizer route changed")
+
+          if result.canonical_temporal_scheduler_modes != ("1/7", "7/1"):
+              raise SystemExit("Immutable scheduler order changed")
+          if result.observed_scheduler_modes != ("free", "7/1", "1/7"):
+              raise SystemExit("Full-core observed scheduler modes changed")
+          if result.observed_ternary_domain != (-1, 0, 1):
+              raise SystemExit("Ternary domain is not exactly -1/0/1")
+          if result.scheduler_mode_record_counts != (
+              ("free", 19),
+              ("1/7", 17),
+              ("7/1", 64),
+          ):
+              raise SystemExit("Full-core scheduler mode counts changed")
+          if result.scheduler_state_record_counts != (
+              ("free", 19),
+              ("balance", 56),
+              ("commit", 8),
+              ("excite", 3),
+              ("neutralize", 14),
+          ):
+              raise SystemExit("Full-core scheduler state counts changed")
+          if result.transition_classification_counts != (
+              ("same_state_retention", 783),
+              ("polarity_to_neutral_transition", 5),
+              ("neutral_to_polarity_transition", 12),
+          ):
+              raise SystemExit("Transition classification counts changed")
+          if result.route_leg_counts != (
+              ("non_route_transition", 790),
+              ("first_leg_neutralization", 5),
+              ("pending_route_completion", 5),
+          ):
+              raise SystemExit("Active-neutral route counts changed")
+
+          if result.trace_record_count != 100:
+              raise SystemExit("Full-core trace record count changed")
+          if len(result.transition_frames) != 800:
+              raise SystemExit("Transition frame inventory changed")
+          if len(result.telemetry_semantics) != 6:
+              raise SystemExit("M27 telemetry semantic inventory changed")
+          if any(
+              (frame.retained_state_before, frame.retained_state_after)
+              in ((-1, 1), (1, -1))
+              for frame in result.transition_frames
+          ):
+              raise SystemExit("Direct opposite transition entered M8")
+
+          if result.dataset_sha256 != (
+              "7325fb188fd7709f28dda06765decaa29ac942895e4772b747291aec29ad3f2b"
+          ):
+              raise SystemExit("M8 deterministic dataset digest changed")
+          if result.visualizer_dataset_id != (
+              "68de3476-2e03-5506-93ea-062c3744e90d"
+          ):
+              raise SystemExit("M8 deterministic dataset identifier changed")
+
+          repeated = visualize_m30_published_archive(archive)
+          if repeated.dataset_sha256 != result.dataset_sha256:
+              raise SystemExit("Repeated M8 projection digest changed")
+          if repeated.visualizer_dataset_id != result.visualizer_dataset_id:
+              raise SystemExit("Repeated M8 projection identifier changed")
+
+          print("Exact RTL and FPGA M16 trace contours: RETAINED")
+          print("Complete balanced ternary kernel -1/0/1: RETAINED")
+          print("Active neutral state 0 and neutral routing: RETAINED")
+          print("Temporal scheduler modes 1/7 and 7/1: RETAINED")
+          print("M7 Trace Explorer cross-link: VERIFIED")
+          print("M27 telemetry semantics: RETAINED")
+          print("Upstream source execution, mutation, and writeback: FORBIDDEN")
+          PY
+
+          FRP_M30_ARCHIVE_PATH="$archive" \
+            PYTHONPATH=. \
+            python -m unittest discover -s tests -v \
+            2>&1 | tee m8a-regression.log
+
+          grep -F "Ran 406 tests" m8a-regression.log
+          grep -Fx "OK" m8a-regression.log
+          rm m8a-regression.log
+
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          archive = Path(
+              "../upstream/artifacts/m30/packages/"
+              "frp-v3.2.0-m30-archival-release.tar.gz"
+          )
+          expected = (
+              "05ea33f6f3f505d315af930c2d51779f7189905308473f32a57375e477069caa"
+          )
+          observed = sha256(archive.read_bytes()).hexdigest()
+
+          if observed != expected:
+              raise SystemExit("Upstream archive changed during M8A validation")
+
+          print("Read-only upstream archive after M8A: VERIFIED")
+          PY
+
+      - name: Commit the complete M30 full-core Transition Visualizer source
+        working-directory: observatory
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          target="transition_visualizer/m30_published_transition_visualizer.py"
+
+          git diff --check -- "$target"
+          git add -- "$target"
+
+          if git diff --cached --quiet; then
+            echo "The exact M30 full-core Transition Visualizer source is already current."
+            exit 0
+          fi
+
+          unexpected="$(
+            git diff --cached --name-only |
+              grep -Ev '^transition_visualizer/m30_published_transition_visualizer.py$' ||
+              true
+          )"
+
+          if [[ -n "$unexpected" ]]; then
+            echo "Unexpected staged paths:"
+            printf '%s\n' "$unexpected"
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git commit \
+            -m "Add Observatory M8 full-core Transition Visualizer source" \
+            -m "Create the deterministic read-only M16 full-core transition projection from the exact M30 archive while preserving separate RTL and FPGA contours, the immutable -1/0/1 kernel, active neutral state 0, temporal scheduler modes 1/7 and 7/1, M7 Trace Explorer cross-links, M27 telemetry semantics, and the upstream-only no-writeback boundary."
+
+          git push origin HEAD:main
