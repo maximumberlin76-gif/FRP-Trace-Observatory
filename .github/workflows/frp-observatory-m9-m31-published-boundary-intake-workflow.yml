@@ -1,0 +1,455 @@
+name: FRP Observatory M9 M31 Published Boundary Intake
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frp-observatory-m9-m31-published-boundary-intake-main
+  cancel-in-progress: false
+
+jobs:
+  qualify-m31-published-boundary:
+    name: Qualify exact read-only M31 publication boundary
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out Observatory main read-only
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: observatory
+          persist-credentials: false
+
+      - name: Check out FRP upstream main read-only
+        uses: actions/checkout@v4
+        with:
+          repository: maximumberlin76-gif/Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor
+          ref: main
+          path: upstream
+          persist-credentials: false
+
+      - name: Set up exact Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Require manual main-branch execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF_NAME}" != "main" ]]; then
+            echo "Run this workflow manually from Branch: main."
+            exit 1
+          fi
+
+      - name: Validate the exact M31 published boundary
+        shell: bash
+        env:
+          UPSTREAM_ROOT: upstream
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from __future__ import annotations
+
+          import hashlib
+          import io
+          import json
+          import os
+          import tarfile
+          from pathlib import Path, PurePosixPath
+
+          DOCUMENTS = {
+              "schema": (
+                  "schemas/m31/"
+                  "frp.m31.phase_interference_active_zero_thermal_evidence.v1.schema.json",
+                  1468,
+                  "53d79d45d70753ccd24c3dc4c97af6fee481f86a9d7cdca7ef78b486c76479f7",
+              ),
+              "evidence": (
+                  "artifacts/m31/evidence/"
+                  "m31-phase-interference-active-zero-thermal-evidence.json",
+                  39993,
+                  "bdaa676acbfb09d86d848070e8a2673c5ce6902657a0b13b2e4293383bec8b42",
+              ),
+              "manifest": (
+                  "artifacts/m31/manifests/"
+                  "m31-phase-interference-active-zero-thermal-evidence-manifest.json",
+                  828,
+                  "80f0841d0041cd22c2f76175b6139e601aede7b69823356ae1fefbce5f793e7c",
+              ),
+              "qualification": (
+                  "artifacts/m31/qualification/"
+                  "m31-phase-interference-active-zero-thermal-evidence-qualification.json",
+                  1512,
+                  "4c2446f954e01ec0aa37cc6c0fc70cf4a87ec565c450628e31b0efcac9160224",
+              ),
+          }
+          ARCHIVE_PATH = (
+              "artifacts/m30/packages/"
+              "frp-v3.2.0-m30-archival-release.tar.gz"
+          )
+          ARCHIVE_BYTES = 10_189_989
+          ARCHIVE_SHA256 = (
+              "05ea33f6f3f505d315af930c2d51779f7189905308473f32a57375e477069caa"
+          )
+          ARCHIVE_PREFIX = "Fractal-Resonance-Processor-FRP-v3.2.0"
+
+
+          def digest(raw: bytes) -> str:
+              return hashlib.sha256(raw).hexdigest()
+
+
+          def reject_constant(value: str) -> object:
+              raise ValueError(f"non-finite JSON value: {value}")
+
+
+          def unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+              result: dict[str, object] = {}
+              for key, value in pairs:
+                  if key in result:
+                      raise ValueError(f"duplicate JSON key: {key}")
+                  result[key] = value
+              return result
+
+
+          def decode(raw: bytes, path: str) -> dict[str, object]:
+              try:
+                  value = json.loads(
+                      raw.decode("utf-8"),
+                      object_pairs_hook=unique_object,
+                      parse_constant=reject_constant,
+                  )
+              except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+                  raise SystemExit(f"strict JSON failure for {path}: {exc}") from exc
+              if not isinstance(value, dict):
+                  raise SystemExit(f"JSON root is not an object: {path}")
+              return value
+
+
+          root = Path(os.environ["UPSTREAM_ROOT"]).resolve(strict=True)
+
+
+          def read_regular(relative: str) -> bytes:
+              if not relative or "\\" in relative or "\x00" in relative:
+                  raise SystemExit(f"unsafe upstream path: {relative!r}")
+              pure = PurePosixPath(relative)
+              if pure.is_absolute() or any(
+                  part in {"", ".", ".."} for part in relative.split("/")
+              ):
+                  raise SystemExit(f"unsafe upstream path: {relative!r}")
+              target = root.joinpath(*pure.parts)
+              if target.is_symlink() or not target.is_file():
+                  raise SystemExit(f"required regular file is missing: {relative}")
+              try:
+                  target.resolve(strict=True).relative_to(root)
+              except ValueError as exc:
+                  raise SystemExit(f"upstream path escapes checkout: {relative}") from exc
+              return target.read_bytes()
+
+
+          values: dict[str, dict[str, object]] = {}
+          for role, (path, byte_count, raw_sha256) in DOCUMENTS.items():
+              raw = read_regular(path)
+              if len(raw) != byte_count or digest(raw) != raw_sha256:
+                  raise SystemExit(f"exact M31 {role} byte identity mismatch")
+              if not raw.endswith(b"\n") or raw.endswith(b"\n\n"):
+                  raise SystemExit(f"M31 {role} terminal newline mismatch")
+              values[role] = decode(raw, path)
+
+          schema = values["schema"]
+          evidence = values["evidence"]
+          manifest = values["manifest"]
+          qualification = values["qualification"]
+
+          evidence_schema = (
+              "frp.m31.phase_interference_active_zero_thermal_evidence.v1"
+          )
+          if (
+              schema.get("$schema")
+              != "https://json-schema.org/draft/2020-12/schema"
+              or schema.get("additionalProperties") is not False
+              or schema.get("type") != "object"
+              or schema.get("properties", {}).get("schema", {}).get("const")
+              != evidence_schema
+          ):
+              raise SystemExit("M31 formal schema boundary mismatch")
+
+          required_fields = {
+              "schema",
+              "version",
+              "milestone",
+              "kind",
+              "status",
+              "core",
+              "active_zero_execution_evidence",
+              "historical_thermal_experiment",
+              "current_comparative_thermal_contours",
+              "evidence_boundaries",
+              "observatory_publication_contract",
+              "provenance",
+          }
+          if set(evidence) != required_fields or set(schema.get("required", [])) != required_fields:
+              raise SystemExit("M31 evidence field inventory mismatch")
+          if (
+              evidence.get("schema") != evidence_schema
+              or evidence.get("version") != "1.0.0"
+              or evidence.get("milestone") != "M31"
+              or evidence.get("kind")
+              != "phase_interference_active_zero_thermal_evidence"
+              or evidence.get("status") != "PASS"
+          ):
+              raise SystemExit("M31 evidence identity mismatch")
+
+          core = evidence.get("core")
+          if not isinstance(core, dict) or (
+              core.get("balanced_ternary_notation") != "-1/0/1"
+              or core.get("semantic_values") != [-1, 0, 1]
+              or core.get("active_neutral_state") != 0
+              or core.get("zero_role") != "active_computational_state"
+              or core.get("opposite_transition_routes")
+              != [[-1, 0, 1], [1, 0, -1]]
+              or core.get("temporal_scheduler_modes") != ["1/7", "7/1"]
+              or core.get("service_scheduler_mode") != "free"
+              or core.get("classical_bit_addition_primary_mechanism") is not False
+              or core.get("primary_computational_organization")
+              != "retained_relative_phase_interference_and_resonant_selection"
+          ):
+              raise SystemExit("M31 processor core boundary mismatch")
+
+          active = evidence.get("active_zero_execution_evidence")
+          if not isinstance(active, dict) or (
+              active.get("record_count") != 100
+              or active.get("cell_observation_count") != 800
+              or active.get("active_zero_after_observation_count") != 702
+              or active.get("invariant_pass_records") != 100
+              or active.get("observed_ternary_domain") != [-1, 0, 1]
+              or active.get("retained_transition_counts", {}).get("direct_opposite")
+              != 0
+              or active.get("event_totals", {}).get("actual_direct_events") != 0
+              or active.get("event_totals", {}).get("reserved_state_events") != 0
+              or active.get("event_totals", {}).get("queue_overflow_events") != 0
+          ):
+              raise SystemExit("M31 active-zero execution evidence mismatch")
+          if sum(active["scheduler_mode_counts"].values()) != 100:
+              raise SystemExit("M31 scheduler-mode total mismatch")
+          if sum(active["scheduler_state_counts"].values()) != 100:
+              raise SystemExit("M31 scheduler-state total mismatch")
+          if sum(active["retained_transition_counts"].values()) != 800:
+              raise SystemExit("M31 retained-transition total mismatch")
+
+          historical = evidence.get("historical_thermal_experiment")
+          current = evidence.get("current_comparative_thermal_contours")
+          boundaries = evidence.get("evidence_boundaries")
+          contract = evidence.get("observatory_publication_contract")
+          if not all(
+              isinstance(value, dict)
+              for value in (historical, current, boundaries, contract)
+          ):
+              raise SystemExit("M31 evidence contour object mismatch")
+          if (
+              historical.get("measurement_class")
+              != "release_specific_model_thermal_load"
+              or historical.get("physical_temperature_measurement") is not False
+              or historical.get("winner_assertions") != []
+              or len(historical.get("rows", [])) != 4
+          ):
+              raise SystemExit("M31 historical thermal contour mismatch")
+          focused = historical.get("focused_binary_ternary_comparison", {})
+          if (
+              focused.get("heat_peak_ratio_binary_over_active_neutral_ternary")
+              != "15.6923076923"
+              or focused.get("heat_peak_relative_reduction_percent_exact")
+              != "93.6274509804"
+              or focused.get("switch_load_ratio_binary_over_active_neutral_ternary")
+              != "4.0"
+          ):
+              raise SystemExit("M31 historical focused comparison mismatch")
+          if (
+              current.get("measurement_class")
+              != "shared_model_comparative_benchmark"
+              or current.get("physical_temperature_measurement") is not False
+              or current.get("historical_heat_peak_interchangeable") is not False
+              or current.get("baseline", {}).get("winner_assertions") != []
+              or current.get("hardware_sensitivity", {}).get("winner_assertions")
+              != []
+          ):
+              raise SystemExit("M31 current comparative contour mismatch")
+          if set(boundaries.values()) != {True} or len(boundaries) != 7:
+              raise SystemExit("M31 evidence-boundary flags mismatch")
+          if contract != {
+              "direction": "upstream_published_bytes_to_downstream",
+              "downstream_metric_normalization": "forbidden",
+              "downstream_repository": "FRP-Trace-Observatory",
+              "downstream_role": "read_only_validation_and_visualization",
+              "downstream_semantic_reimplementation": "forbidden",
+              "downstream_source_mutation": "forbidden",
+              "downstream_writeback": "forbidden",
+              "m29_boundary_confirmed": True,
+              "published_contours_must_remain_separate": True,
+              "upstream_repository": "FRP",
+          }:
+              raise SystemExit("M31 Observatory publication contract mismatch")
+
+          def entry(role: str) -> dict[str, object]:
+              path, byte_count, raw_sha256 = DOCUMENTS[role]
+              return {
+                  "byte_count": byte_count,
+                  "path": path,
+                  "raw_sha256": raw_sha256,
+              }
+
+          stdout_sha256 = (
+              "b18e1affec6dec8029086e923b907c9ae3cb0c50131e4291b31fbd2a4d97cbb6"
+          )
+          if (
+              manifest.get("schema")
+              != "frp.m31.phase_interference_active_zero_thermal_evidence_manifest.v1"
+              or manifest.get("version") != "1.0.0"
+              or manifest.get("milestone") != "M31"
+              or manifest.get("status") != "PASS"
+              or manifest.get("source_count") != 12
+              or manifest.get("historical_experiment_stdout_sha256")
+              != stdout_sha256
+              or manifest.get("generated_files")
+              != [entry("schema"), entry("evidence")]
+          ):
+              raise SystemExit("M31 manifest boundary mismatch")
+          checks = qualification.get("checks")
+          if (
+              qualification.get("schema")
+              != "frp.m31.phase_interference_active_zero_thermal_evidence_qualification.v1"
+              or qualification.get("version") != "1.0.0"
+              or qualification.get("milestone") != "M31"
+              or qualification.get("status") != "PASS"
+              or not isinstance(checks, dict)
+              or len(checks) != 13
+              or not all(value is True for value in checks.values())
+              or qualification.get("outputs")
+              != [entry("schema"), entry("evidence"), entry("manifest")]
+          ):
+              raise SystemExit("M31 qualification boundary mismatch")
+
+          provenance = evidence.get("provenance")
+          if not isinstance(provenance, list) or len(provenance) != 12:
+              raise SystemExit("M31 provenance inventory mismatch")
+          paths = [record.get("path") for record in provenance]
+          if len(set(paths)) != 12 or not all(isinstance(path, str) for path in paths):
+              raise SystemExit("M31 provenance path identity mismatch")
+          if manifest.get("source_count") != len(provenance):
+              raise SystemExit("M31 provenance source count mismatch")
+
+          archive_raw = read_regular(ARCHIVE_PATH)
+          if len(archive_raw) != ARCHIVE_BYTES or digest(archive_raw) != ARCHIVE_SHA256:
+              raise SystemExit("FRP M30 archive identity mismatch")
+
+          verified_archive_records = []
+          for record in provenance:
+              path = record["path"]
+              raw = read_regular(path)
+              if (
+                  len(raw) != record.get("byte_count")
+                  or digest(raw) != record.get("raw_sha256")
+              ):
+                  raise SystemExit(f"M31 provenance source mismatch: {path}")
+              flag = record.get("m30_archive_member_verified")
+              if flag is True:
+                  verified_archive_records.append(record)
+              elif flag is not False:
+                  raise SystemExit("M31 provenance archive flag is not boolean")
+
+          with tarfile.open(fileobj=io.BytesIO(archive_raw), mode="r:gz") as bundle:
+              for record in verified_archive_records:
+                  member_name = f"{ARCHIVE_PREFIX}/{record['path']}"
+                  try:
+                      member = bundle.getmember(member_name)
+                  except KeyError as exc:
+                      raise SystemExit(
+                          f"M31 provenance member is absent: {record['path']}"
+                      ) from exc
+                  if not member.isfile() or member.issym() or member.islnk():
+                      raise SystemExit(
+                          f"M31 provenance member is not regular: {record['path']}"
+                      )
+                  handle = bundle.extractfile(member)
+                  if handle is None:
+                      raise SystemExit(
+                          f"M31 provenance member is unreadable: {record['path']}"
+                      )
+                  raw = handle.read()
+                  if (
+                      len(raw) != record["byte_count"]
+                      or digest(raw) != record["raw_sha256"]
+                  ):
+                      raise SystemExit(
+                          f"M31 archive member bytes mismatch: {record['path']}"
+                      )
+
+          print("Exact FRP M31 published boundary: PASS")
+          print(f"published_documents={len(values)}")
+          print(f"provenance_sources={len(provenance)}")
+          print(f"m30_archive_members_verified={len(verified_archive_records)}")
+          print("balanced_ternary_notation=-1/0/1")
+          print("active_zero_state=0")
+          print("historical_and_current_contours=separate")
+          print("physical_temperature_claim=absent")
+          print("winner_assertions=absent")
+          print("observatory_direction=read_only_downstream")
+          PY
+
+      - name: Run complete Observatory regression against FRP M30
+        working-directory: observatory
+        shell: bash
+        env:
+          FRP_M30_ARCHIVE_PATH: >-
+            ../upstream/artifacts/m30/packages/frp-v3.2.0-m30-archival-release.tar.gz
+          PYTHONDONTWRITEBYTECODE: "1"
+          PYTHONPYCACHEPREFIX: /tmp/frp-observatory-m9-pycache
+        run: |
+          set -euo pipefail
+          python -m compileall -q \
+            artifact_auditor \
+            parsers \
+            schemas \
+            trace_explorer \
+            transition_visualizer \
+            tests
+          python -m unittest discover -s tests -v 2>&1 | tee /tmp/m9-tests.log
+          grep -F "Ran 447 tests" /tmp/m9-tests.log
+          grep -Fx "OK" /tmp/m9-tests.log
+
+      - name: Prove both repository checkouts remain unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -C observatory diff --exit-code
+          git -C observatory diff --cached --exit-code
+          test -z "$(git -C observatory status --porcelain)"
+          git -C upstream diff --exit-code
+          git -C upstream diff --cached --exit-code
+          test -z "$(git -C upstream status --porcelain)"
+          echo "Observatory and FRP source trees remain unchanged."
+
+      - name: Publish M9 summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## FRP Observatory M9 M31 Published Boundary Intake"
+            echo
+            echo "| Boundary | Result |"
+            echo "|---|---|"
+            echo "| Trigger | manual main only |"
+            echo "| M31 documents | 4 exact files |"
+            echo "| M31 provenance sources | 12 exact files |"
+            echo "| M30 archive members reverified | 10 |"
+            echo "| Observatory regression | 447 tests |"
+            echo "| FRP mutation | forbidden |"
+            echo "| Observatory writeback | forbidden |"
+            echo "| Job status | ${JOB_STATUS} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
+        env:
+          JOB_STATUS: ${{ job.status }}
