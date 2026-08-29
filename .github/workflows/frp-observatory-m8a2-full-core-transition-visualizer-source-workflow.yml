@@ -1,0 +1,331 @@
+name: FRP Observatory M8A2 Full Core Transition Visualizer Payload Segment 2
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: frp-observatory-m8a2-transition-visualizer-payload-main
+  cancel-in-progress: false
+
+jobs:
+  stage-transition-visualizer-payload-segment-2:
+    name: Stage exact M8 source payload segment 2 of 3
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out Observatory main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: observatory
+
+      - name: Check out FRP upstream main read-only
+        uses: actions/checkout@v4
+        with:
+          repository: maximumberlin76-gif/Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor
+          ref: main
+          path: upstream
+          persist-credentials: false
+
+      - name: Set up exact Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Require manual main-branch execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]]; then
+            echo "This workflow must be started manually."
+            exit 1
+          fi
+          if [[ "$GITHUB_REF_NAME" != "main" ]]; then
+            echo "Run this workflow manually from Branch: main."
+            exit 1
+          fi
+
+      - name: Verify the exact green M7 and upstream boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          requirements = {
+              Path(
+                  "observatory/artifact_auditor/"
+                  "m30_published_auditor.py"
+              ): (
+                  "3964ffaf2c0c51ba15a637ee3c18897d"
+                  "e966d4b32e7931aabdd0d52c97c7de59"
+              ),
+              Path(
+                  "observatory/trace_explorer/"
+                  "m30_published_trace_explorer.py"
+              ): (
+                  "986335318fac7dbc894ab18133645653"
+                  "e712944e2997aaaf484e1c7a46f1c879"
+              ),
+              Path(
+                  "observatory/tests/"
+                  "test_m30_published_trace_explorer.py"
+              ): (
+                  "a9f37c8a13652dcd1aaa0beb68ac44e"
+                  "9b118af6f38e893ac4dce08031c77a24e"
+              ),
+              Path(
+                  "upstream/.github/workflows/"
+                  "frp-m30-observatory-full-core-trace-"
+                  "qualification-workflow.yml"
+              ): (
+                  "01ca22bc98f63d9d4ea4a58299d53ff"
+                  "58b410f3f2db94b81097d7cef3ad4dee7"
+              ),
+          }
+
+          for target, expected in requirements.items():
+              if target.is_symlink() or not target.is_file():
+                  raise SystemExit(f"Exact prerequisite is missing: {target}")
+              observed = sha256(target.read_bytes()).hexdigest()
+              if observed != expected:
+                  raise SystemExit(
+                      f"Prerequisite mismatch for {target}: "
+                      f"{observed} != {expected}"
+                  )
+
+          archive = Path(
+              "upstream/artifacts/m30/packages/"
+              "frp-v3.2.0-m30-archival-release.tar.gz"
+          )
+          if archive.is_symlink() or not archive.is_file():
+              raise SystemExit("Exact M30 archival release is missing")
+          raw = archive.read_bytes()
+          expected_length = 10_189_989
+          expected_sha256 = (
+              "05ea33f6f3f505d315af930c2d51779f"
+              "7189905308473f32a57375e477069caa"
+          )
+          observed_sha256 = sha256(raw).hexdigest()
+          if len(raw) != expected_length:
+              raise SystemExit(
+                  f"M30 archive length mismatch: "
+                  f"{len(raw)} != {expected_length}"
+              )
+          if observed_sha256 != expected_sha256:
+              raise SystemExit(
+                  f"M30 archive digest mismatch: "
+                  f"{observed_sha256} != {expected_sha256}"
+              )
+
+          source = Path(
+              "observatory/transition_visualizer/"
+              "m30_published_transition_visualizer.py"
+          )
+          if source.exists() or source.is_symlink():
+              raise SystemExit(
+                  "M8 source already exists; do not restage segment 2"
+              )
+
+          part_one = Path(
+              "observatory/bootstrap/m8/"
+              "m30_published_transition_visualizer.xz.b64.part01"
+          )
+          if part_one.is_symlink() or not part_one.is_file():
+              raise SystemExit(
+                  "Verified M8 payload segment 1 must be committed first"
+              )
+          encoded = "".join(
+              part_one.read_text(encoding="ascii").split()
+          )
+          expected_part_one_length = 6800
+          expected_part_one_sha256 = (
+              "b68f98139fe4c921cab19ed554f59432"
+              "c43e81e226be78f0ae846b4c139b4cf5"
+          )
+          observed_part_one_sha256 = sha256(
+              encoded.encode("ascii")
+          ).hexdigest()
+          if len(encoded) != expected_part_one_length:
+              raise SystemExit(
+                  "M8 payload segment 1 length mismatch: "
+                  f"{len(encoded)} != {expected_part_one_length}"
+              )
+          if observed_part_one_sha256 != expected_part_one_sha256:
+              raise SystemExit(
+                  "M8 payload segment 1 digest mismatch: "
+                  f"{observed_part_one_sha256} != "
+                  f"{expected_part_one_sha256}"
+              )
+
+          print("Exact green M7 dependency boundary: PASS")
+          print("Exact FRP M30 full-core upstream boundary: PASS")
+          PY
+
+      - name: Stage exact M8 source payload segment 2
+        working-directory: observatory
+        shell: bash
+        env:
+          PART_NUMBER: "2"
+          PART_LENGTH: "6800"
+          PART_SHA256: aa391c1b1fcabf4398bea9780c9e5caa4b169f795dfc15cdc9f9e9f1f1528a38
+          PART_BASE64: |
+            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
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import hashlib
+          import os
+          from pathlib import Path
+
+          encoded = "".join(os.environ["PART_BASE64"].split())
+          expected_length = int(os.environ["PART_LENGTH"])
+          expected_sha256 = os.environ["PART_SHA256"]
+          observed_sha256 = hashlib.sha256(encoded.encode("ascii")).hexdigest()
+
+          if len(encoded) != expected_length:
+              raise SystemExit(
+                  f"Segment length mismatch: "
+                  f"{len(encoded)} != {expected_length}"
+              )
+          if observed_sha256 != expected_sha256:
+              raise SystemExit(
+                  f"Segment digest mismatch: "
+                  f"{observed_sha256} != {expected_sha256}"
+              )
+
+          base64.b64decode(encoded, validate=True)
+
+          target = Path(
+              "bootstrap/m8/"
+              "m30_published_transition_visualizer.xz.b64.part02"
+          )
+          target.parent.mkdir(parents=True, exist_ok=True)
+          wrapped = "\n".join(
+              encoded[index:index + 100]
+              for index in range(0, len(encoded), 100)
+          ) + "\n"
+          target.write_text(wrapped, encoding="ascii")
+
+          retained = "".join(target.read_text(encoding="ascii").split())
+          retained_sha256 = hashlib.sha256(
+              retained.encode("ascii")
+          ).hexdigest()
+          if retained != encoded or retained_sha256 != expected_sha256:
+              raise SystemExit("Written segment differs from exact payload")
+
+          print("M8 source payload segment 2 of 3: STAGED")
+          print(f"normalized_length={len(retained)}")
+          print(f"normalized_sha256={retained_sha256}")
+          PY
+
+      - name: Commit exact M8 source payload segment 2
+        working-directory: observatory
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          target="bootstrap/m8/m30_published_transition_visualizer.xz.b64.part02"
+
+          git diff --check -- "$target"
+          git add -- "$target"
+
+          if git diff --cached --quiet; then
+            echo "Exact M8 payload segment 2 is already current."
+            exit 0
+          fi
+
+          unexpected="$(
+            git diff --cached --name-only |
+              grep -Ev '^bootstrap/m8/m30_published_transition_visualizer\.xz\.b64\.part02$' ||
+              true
+          )"
+
+          if [[ -n "$unexpected" ]]; then
+            echo "Unexpected staged paths:"
+            printf '%s\n' "$unexpected"
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git commit \
+            -m "Stage Observatory M8 source payload segment 2" \
+            -m "Stage the second independently verified segment of the deterministic M8 full-core Transition Visualizer source payload after verifying committed segment 1. This step does not create the source module, execute upstream content, or modify any workflow file."
+
+          git push origin HEAD:main
