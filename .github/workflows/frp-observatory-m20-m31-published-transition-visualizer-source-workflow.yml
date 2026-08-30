@@ -1,0 +1,820 @@
+name: FRP Observatory M20 M31 Published Transition Visualizer Source
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: frp-observatory-m20-m31-published-transition-visualizer-source-main
+  cancel-in-progress: false
+
+jobs:
+  publish-m31-transition-visualizer-source:
+    name: Install and qualify exact M31 Transition Visualizer
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out Observatory main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: observatory
+
+      - name: Check out FRP upstream main read-only
+        uses: actions/checkout@v4
+        with:
+          repository: maximumberlin76-gif/Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor
+          ref: main
+          path: upstream
+          persist-credentials: false
+
+      - name: Set up exact Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Require manual main-branch execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]]; then
+            echo "This workflow must be started manually."
+            exit 1
+          fi
+          if [[ "$GITHUB_REF_NAME" != "main" ]]; then
+            echo "Run this workflow manually from Branch: main."
+            exit 1
+          fi
+
+      - name: Verify exact M19 Trace Explorer boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          requirements = {
+              Path(
+                  "observatory/artifact_auditor/"
+                  "m31_published_boundary_intake.py"
+              ): (
+                  32_266,
+                  "f3cfcbc5c388065f8544b16c07bb988d"
+                  "269ec3745d141de215ff48b0e72e277c",
+              ),
+              Path(
+                  "observatory/schemas/"
+                  "m31_published_registry.py"
+              ): (
+                  22_102,
+                  "746a71a1fe2aaa1c367d1d6f6e2f65b0"
+                  "c32908ed89626b4d2335fe866f572e3e",
+              ),
+              Path(
+                  "observatory/parsers/"
+                  "m31_published_dispatch.py"
+              ): (
+                  16_928,
+                  "7140a132f929076f22d2c4868b6a068e"
+                  "a21c5593b9672bc45df6cb1e2b81c495",
+              ),
+              Path(
+                  "observatory/artifact_auditor/"
+                  "m31_published_auditor.py"
+              ): (
+                  53_409,
+                  "efbcb971b946706e4102d4db37fb6fd2"
+                  "384ba2b63fefeadd1dc61cd78460dc66",
+              ),
+              Path(
+                  "observatory/trace_explorer/"
+                  "m31_published_trace_explorer.py"
+              ): (
+                  79_396,
+                  "b0dac82ece92a0886c7ab968d3eed4e9"
+                  "df1ae76eb3d84bfe05bf19cb69ef2893",
+              ),
+              Path(
+                  "observatory/tests/"
+                  "test_m31_published_trace_explorer.py"
+              ): (
+                  29_180,
+                  "a176d49f4ccd10188fb096ab6e528316"
+                  "e0d98c956382a84fa2accbc869dd8cb5",
+              ),
+          }
+          for target, (expected_bytes, expected_sha256) in requirements.items():
+              if target.is_symlink() or not target.is_file():
+                  raise SystemExit(f"Exact prerequisite is missing: {target}")
+              raw = target.read_bytes()
+              observed_sha256 = sha256(raw).hexdigest()
+              if len(raw) != expected_bytes:
+                  raise SystemExit(
+                      f"Prerequisite byte-count mismatch for {target}: "
+                      f"{len(raw)} != {expected_bytes}"
+                  )
+              if observed_sha256 != expected_sha256:
+                  raise SystemExit(
+                      f"Prerequisite digest mismatch for {target}: "
+                      f"{observed_sha256} != {expected_sha256}"
+                  )
+
+          target = Path(
+              "observatory/transition_visualizer/"
+              "m31_published_transition_visualizer.py"
+          )
+          expected_target_sha256 = (
+              "33de1cc15240dda0fc75cdb1feb8efa4"
+              "3e0d4e08026d98e8521939ae7162a96c"
+          )
+          if target.is_symlink():
+              raise SystemExit(
+                  "M31 Transition Visualizer target must not be a symlink"
+              )
+          if target.exists():
+              if not target.is_file():
+                  raise SystemExit(
+                      "M31 Transition Visualizer target is not a regular file"
+                  )
+              observed = sha256(target.read_bytes()).hexdigest()
+              if observed != expected_target_sha256:
+                  raise SystemExit(
+                      "Unexpected M31 Transition Visualizer already exists: "
+                      f"{observed}"
+                  )
+              print("Exact M31 Transition Visualizer is already present")
+          else:
+              print("M31 Transition Visualizer target is ready")
+
+          print("Exact M19 Trace Explorer boundary prerequisite: PASS")
+          PY
+
+      - name: Install integrity-bound M31 Transition Visualizer
+        working-directory: observatory
+        shell: bash
+        env:
+          SOURCE_BASE64_LENGTH: "17212"
+          SOURCE_BASE64_SHA256: 764e244576c76330e78f13d6186bd3f159df44d83c85d46dc5c4eda9a76203fe
+          SOURCE_GZIP_LENGTH: "12909"
+          SOURCE_GZIP_SHA256: 4ae160b803f31ecc04afd0c05db6dbfde8af71b4e54e2105b1e2e09d67a5d821
+          SOURCE_LENGTH: "70767"
+          SOURCE_LINES: "1855"
+          SOURCE_SHA256: 33de1cc15240dda0fc75cdb1feb8efa43e0d4e08026d98e8521939ae7162a96c
+          SOURCE_GZIP_BASE64: |
+            H4sIAAAAAAACA+19a3Mbu5Hod/2KWVaqVtwlefh+qC63VkeWc3TXll2SfDZZX9858wCtifnKDGlbcfTfb+M1g0djZiiLTvZukqpj
+            cQA0Go1Go7vRaDQajRsSxO3Nevng7dJgnSW7ZLP2PifZPlgmfwnYr8Um9Xb3xCNfg2jnvbx5670e9LztPlwmEavROTm5u08yb7WJ
+            90viZbsg3WUeAxosdoS3jjar7ZLsSNE4uyexd57ukgWFe76Pk90mPQmDXXTv3QeZtw2yjMQdz7vaefuMZAxMTGLaK7T87TcAvQ7S
+            B7/A3JeYk/S3307SzR76k+gXfVIMyOckJuuIeME6ZsXBMgVSPHh/pu0Xiah2lwYRObn8ul1uUhjINt38iUQ5VRIY5u7Lxtuvo/tg
+            /RHakK8k2rPyaLPebfZpxohDvJRk++UuWX/0ktVqvwtCIFQc7IKM7KDRdkPHN+12vQzaRKS9TNafAJwyJ4s0WJGsdaIPZQuEIu1k
+            DaRYkJQNiBIaOuBI3AfJuuUBfZPPWkmw9IBGGw4uDJYBtITuOEG9eLOCdl6791P3p17LCze7eyhbbTcptMsi6BjmOaXzDVj3fpow
+            Ik6g6gn9YwFDACZIk2gHHJCRbZCyCYOu0lWwbOek3wZrssxggimBgIFg+mFul0CrJYFhnYRQ634VpJ88YK41+Uy7JCkl85eEYkS5
+            ap/CqHdsaLQbOswQ2gL9SAu4KI2/BCk5yQgj4+dk99DyOD8wVGA+F8mSqJN1DdO5BexJsBKTQXvn88q4ESqsCB0dw2pD4QC/xS34
+            W8KV8E7oomAYs1K6dDKyCtY73jglCV0TKxiAqJH3HD7sWL+UVVghEPYEKnA2oiVf0mS3I2sYbfTJ2zHgnZNGo3Fyskg3K8/3F/vd
+            PiW+DwwHE7cDCOsNn/zs5ER+Sz8C2YDU4jdw0/0yCeXPP2WbtfwbqMgAR5vlki+BTEK+2OwpA1rlnSCMZJ3XwXYL3M/rUMaPlnR5
+            5zDyT3kNsktWRClmv0UpiRJKZlH4gv/kZdtgR4cgy97CT16we9jy5ce+n6+BE14ma9lsv09iWfbu3dWLFvsyEtQMhJTyAy6lOuxf
+            PyWsvmh2y7jl1YYLxZb3KzBGzP6+BbrvMweo1aDn5wtafpUwT088+B9IoreyBpOTP1Mh2cLLbhhSvJCjqfcQb6I9ZTmQJc1aKIUw
+            vTGVsyBmgk/EQs1/++7nV1e3v1y+8G8uf391e3fzR/jj16vbqzfXNo4vRPc3myXJMWBMCMvPwDTJtmw3kDyEgHkh6nA4VDatAhNO
+            Sj6CcAG5hsB5DZIGlgkFdSEWrQbJbPsmBEQ/B0Clh9cg/gRr0V3CJ2KXMHrXC90Ty7aaC7JcthxFHD1H6Qu+lzhKb0i0SWNeGO6T
+            ZexjOMYSRvPk5MT3g+USpMfce8+aNVSgFzAUWHVLJnI360bLrnLHRaHAGq2Rb24v6d5WXuXXfGMXI61b/TJNN3n3jrHb2oNskH9x
+            LSKo+IFSC/j9xeX1xaV/e/HL5evzMy5bgHp8ohuLdEv5osM2bF/dsH2+O/t0P/bFBuLLPbLzudeA6SjA/8fV9YsCeONAcA0F0tvz
+            u18sNKUoyH4CZH+SzX5q8FL41rY1jjbvsU17bJubfIfuIfoQbs7/07/95bw/Glvdh3EQjCfjIAoXYXcWT8fxdDjtTrpkGvTHk0E0
+            ish41u2PR5OgG/YGYZ8M+7PBYDoISTQNh33W0d3NOfTy4vzu/PbyztUTWYyC7rAbzeJBN+72F7Nutzsg3e6EDIeTaNGNx+P+YLoY
+            9EjcnxCAP+uHcUQGvSDuzRaLBdLTlTox3QX9/4S0oZNZe0QmYXsaTcbt/mLSD8PZaDjow8z6ICXfnb+6+q/LG//F1S1MycUvLowX
+            i+FoNhn2esFk2oumvWEQTsmi26UjmAxm0xEti/vBoLdYDIbTAf0+7obDyTQYzyZkyjC+eHNz6eqgO4pm02gR9mYkmpDFdAQDCKB9
+            uJh2ST/qDwZdAiiM+qMR7WkAFBrPglGvF46ibjgLeAfvbm4ur+/8u18ub16fvwIuYz8dXY7D7ngcEjLshZNZbzHpTsPeeDyb9eKo
+            P4uH3el0Mo663ekQJjuACRiTCQlnU5iRfkTCUZd2eeL/cvmH8bCAnZIOVQdBrztNG//3fbc9C9qLD9/Gw8ffNeikXd5cn8MW9eLN
+            6/Or66IZSPK/gJpIdqff2qD0dlte7xGq/wrT84Kt6hfvXsE0vX7z4vIWbQVrnIAU8xqgEdN/QCFuYBBu787vcBCMKAUcoZfTP2FA
+            q2RH/yJfo2THvq3JHmQXFU6Nx3xur89fXwIfXVwW8Kk6c9rodkMyjBajdp8Mum1g/qAdTkjU7pFJdziZDMeTcEbJ8/IGILjBDIPu
+            BBhw0Q7iwQjA9HptYMVFe7Ig4SToz8LZrM+oLObfCWgxDIbQYNQeTGIANB2N29PZaAr/gclfAM8CA1JAcnU5AY2AEfphNGqTiMDA
+            poQKpOmw3QvH4XAYBcCpiwZlk4s3r9++A9qDWuJf/KLNvWDHlOzA7pFmFbNqYC7+vAdB9kDN2l2+SYGJwowNLg49Jg6DSN0LecEm
+            /RispSFN4VGdBjQdpSKo9GCPUXsIzBaiwVhRkzEDk4haKPfCviOfg+Ve23bjh3WwApMCMAyTJdg4SB0utmOSAtKFoQeW+sdiK42p
+            ppOE1M4RJmNb8Jgn+c+gk8BqlwOURIKJe/P27Zvbq7tLKiWv4Q9K9ps37zTWPz2VS63Z8k75n+1ek63S12/f3AADOVfeqbrOoMX5
+            xd3Vr5c+iNI30M8rrSpHG6yyxRKsUj9fORqJpIXrC5NVKeIrEcyHnFTBaqv8VHSIcL+AfVEpy8BYje7hg7/cBEyp5UTWWIDTU9VF
+            qAmZrPcwm/kUknVMwTC3hi/8KbTqNrUQFqyQD5BvVnIaLl6d395evby6YIvBJpSmQmz87QYUPQWROEmBT/3NdrvJkmJNyGq0iQLB
+            GmTGlT2qEvzh7eXFHdgNKm5v3l3fWSidunHyev1mS1SyMPO6eZkTPW+U1zFw9CbTQZNhyhjXf3X5e5tYa5gBPiXF7MkxL5I02/lL
+            8tFBE9eUGuThvbsogyPgTWbF2N14KIN3I8MqqSrcz4DKi/Obq0sEncKR44PA84WHxpcuFrm6KHnv0j3Ju1fa3ZNg529J8MlPMn+9
+            2eVA0sinqxRkLfNtbNPN1wcTTuGS4SOlUx5tYPgC1vb+IWO9kDVJP1rNNww6X4H7dd5KatJ0DZtNcoirwpj06b4B3Bj7i03qZ7AW
+            gQAa8mA9JSsTVBZB//4yAWHLDNcld9j4ATSgaOzXMHVpBn19SdaAP4eSmWAktoxA1sAVLIqGML3Mjr8QG+Sba6rd3tnzy9cY54uG
+            dFip7oKHHckon8WbL2te2igWaP7N5040X05XIEECvcIkBuMBbUVdLhl1UtCJa7y8edtmBm5bscvxdpslU5qok9enrmn/c+6eYXyq
+            +bxRENJ15yt+u5pYc0eiv9rXbUC9e4S69hxVV/1Z4Zeh+1qSrojNmPmk5Ktvtc8ob1L/rnMl5pNqEbvR5M6Bf8/ddadce51TAC0v
+            W252Gfu7ecKKPV/3A9xuSXTGugGVhZxRNzH79RGEzrb4KehFbUefOvSKkm3wwLbR7D5gBoX8ri491rPSBOF7dameeeFms6RGvFRa
+            b0HuWpINGQkvkKOZqyJM+LD93IctRH4+WLW2UmaOfN74XUcBmxv0X2EkCcVeaavTZl5gx/aaaUCG02AKRt6kF48XZBr3BuNFDCbX
+            cBREk3ja7UXj3nAcTfskCPvwCeoOyXTQm0Zhb9ht5OCaRZcW2ecNOXLQc6NkAcuFHhMsDQFa4FwxOfOXwTIjvL7ot8ZEFJtOfizg
+            y2MBeyJE7YpZwGDKQeXnB0gn5bMSTQKwgPvBbDaGmRj1Rt1pFPWHMzC0Z71J3B+ANhlGwz4YSN1esIjBTppEUDtYLBbjII7rzgr0
+            TjcjPhcaWRAGPe6kyFMZXzmVedKkGKSsOUVo9xgVyyduFk6DSXe2GI9IbzQOe+PuIogW4WwyCabhZDDuh7P+dDAcxtFwBOZolyyG
+            4YwEZDyYDHqDoPvfcOIUrYKemv3AOTN7Pny6etGsT7qLcBGOhovebNodRDB7k27YjcNFbwCSLgwHk16/F8CcdSfxeDgezIJ4HAxG
+            IA8J+XuYrqa+Q/k//5F5RYqN6huVuR2xs8Kf7JCa/ZGsPX13e4T9ju/QtRzop78Gyz1hfzb5/t1oNG6CJKOHsfdkrQQI0GPzwpHu
+            SS2Fnll+TsAGo6eo7JzyJCYLT6phMOnk6+6U+i0A+U1Ij9lb3iIhy5jt5E2v/W/0X955svBAowWQCShM1HfCG7ZYzbOcvilFsOYA
+            NXZZNL6xrh89qi95IfECdqINVn3BByomrHt6ssz/+Kc5/6NDG21Pm7Sk8X++drsNOhN8kMfAEkxB4KTdAzsgBzPOo6ZcCjME2mS2
+            BT2ZInL97pU5CrB796lAzJoYALomHzkXU0fXR5JWzBPUyufJniOqbTGK4FMIjY80hWtPoI9MIp+3/+V1jzUvkoQHkZ7LsmdZFZLg
+            3FveWeyXyxU9OOV1jkPx5eYLSSPqB70H2SBP7W9/OW/DqA4iBD2Mr0sGTKSI2rynXfpQDJc5kTkN2DfyNSLbnacIvJZ3vhN+US4A
+            vYAGhERHkjMMe4aWQiGPnTNDp9WkEq7Y/1+XKMOI7mb6Mc4xsAFh6m0WnnRR12HY7RIMa530jNzn64cScovgGJWmHPY3mK7TT+Sh
+            eSZBgyBfNdm+Dp9hJuBnvqV06K/stPno7ul0t98u4V+gzK5p9/fe6kXr4IMbsIjBsUEuQCnbqQsMI1sUgIRkmhDTFJkLCaEi+36m
+            QqHVO/F+tc2KyVQnoamqounOB6Jx/4TynXtBNmk2P220qKPjrKE0AyOBamVBFiWJ0TJYgoDz18Fa09M6oOiB9nfa2O8W7Sk9eULH
+            aKs7uhQTAywhTbMDEhXrSewaafDljJMMhSxivTpF7WYHxHScfCTZ7jQHJvyY/orzaIVYEZz8Hn63KNN/qNiZEM5/TlkqkK6zcuU4
+            M37eRyoGytbRexZF1ul0qobpXHbPKjqDNA0eHGNlCMhlKIasnjZRU4B6a5h/8jQksPZh8CCMWzyGl/3t3mf5lsObtdSzHnoe6PPv
+            jaajGevAbsU+N3Lxz4F487lAyBQ0xuGN3azLDmB5RDJINHb02LMFlvOkyYBYgFDg0m5siK6jp5Mn84DwwnvypMuTg28z2imBwxmw
+            BQuCFi5kLqRyrmdnPUvy8TQiy+UZHpBmaZm0bkcconIQsT1o55mThFKMhsHTj58sIhdSF4jNGqBMxmagsm4+Wc6ebRB6rWK6OUGR
+            SXcdp6nLEj+8O8jDXhKXl1vql8wyL8LGaSSyGifOguD5amxHlIpxAYQb62yaoMRXSvwkVrzs6SYiGWyyxScZVy4Xui8DkBVHvzxT
+            YZIpOxNylckd+R+udQgOklzH5pEJJVbKFis94ylAc5FGN84w2flBHCfisBz0FMBlRWjMfpKthPufj4GXaYHyvhrDoYAv6vgszF7i
+            zrY+uidwW0MMfRk8kNTAkJ5YJRFsOTKinrmNivIiIEGrkGk9wX94T1IUqGKdcVZeH6Otgqrw1S1FAPOZEdCs1klZPKl2CMOKmUwB
+            iUlPW9dAdf80I8sFkx/XoE0Xi8Sw7GitDsJeLPLJ+toohAFVUdlG2BLmARUY2k552sg5E3Q71lH+QVHzeFUnx8qmzgoWqJwjZdP8
+            g1lV+8XDAir5sNGyWomhVbXUG1po2/wq8bdLrMY4Q0sAeKkCRBGitex4ax9RyCBmmHriGi9paFaw9G7ySKu3OUtobam3tHSWGTh+
+            LQZvacgzWr8IcUJbYHKNNuuitXMmYpiItvpk8xAstHVdkchvtuw8ZtagkKr5TGtGkc23YBk752PBy2tazqZp5xfxcPhoTAlMu7Gj
+            /NC2NjNb+MZJFgHORKgMPFROFa4c13xQ9GJOfibv4g5sBbDeWMynA1V8F2CjdYXJoZDcOwSD5Q7Yc63QJ5svXMo51RF6Q8uhjXji
+            pp1OK00eGCYYp7y+t7WMve1Zx8VQNjrMzTS935JRYGjTadIB6N3r59XU5NIl9DaIPgUf6RHTKiTpXL8L0DrOLCvUgDkGrSFZUwlX
+            MY2WC1wlh6Z9gIqAfW5UbRFYIyFA8hB5fBEjDU3hIbHGvTcqGHFqedpsNo9Pf+7bqbGEXPoYHRt1SWot2UW5UyP8vOUm1hEHaqIb
+            bwjfycJkHYvzSYUgJgVyHdaYnFyJjZNox9Vu7hb6UAyAnofCKGkA1x56Kc5DCzH322+0799+k26pwrJSXb76uTWmHjTO3KqDvuBL
+            FNqzClXHAFRXdQC4p7hqWhdCmX7asPZ86I861U5xjcBs7t4BAc57C28GmZVzZzi/UA6KRsV2qgH6YOBQQ7l30vBAtatpdS3V3jND
+            TzYqGmqsRmSjrGk1RW2AszINyADh0ng0NFyVmhYwy6A5c+mARtPChDsztO+i4qP0pPGrhaYQ4vOou5JPuKe8ym0jZPbc4YIXprHY
+            54Rkr9x5GEyx1Zi2ylw4iU8wA4x7aulpEJhgJn+8/wbilXx9/GBY5uxrcUhF1vsVjXIhOnfbrneOZgf07VOLFZstmz2bhs879xkv
+            yfrU5Fe6hw2ewQVvYsFVPBqyRE0RJvtpVo17UOw9gafpmue6t0V342f5VBQeYCacvnFnIp+Phm5yqud5NtFZw1YhI9XkE6zMIrOE
+            qXTZKmRk7dm2RZ0y/SUSu2n7QMqqtxzqjsEywfrhlLKNEPuUWXTZz8E9xyGOm9QGM3EmYvt75jjfKREnip/dVpHmVJ1zaHBcqDTV
+            GDu5X8wN54w6ZcUuQ9eq+iuH49Q6TLgnLr5wKzbN2ipQC4vpM1b13PitnP4i2tfcXqfOEaCanYk8WgnFO9+byqam2NHo1Ki/Ch6p
+            qabNFbhPVBXRKM5KDac2i9RQtJqH62Yo8S3Fc14hwwFvKcCttthuetiOWlPOmgSzlWtExDrUcLti0yVvi6q2BlZ7chG1robm51jx
+            mE5aGxOHwltTL27hdMF12wO4ygXib8ZcTqXexWPOBk9iNbdiMOf/WDHr0uk2/xEeN6t3zWMy5ztxSz+7ZxnBch8FK/sXXqUIv85z
+            6KhndS0RBankfJFHuViRo6UIzsdayiKrZd6GchoPL7Fvb/E6SqvcGyMugmlfeY8OHAUVNRSdR5iiWHC0gl2e1M0n2010r5QgJ7dm
+            gTioLkhAlkuGUA6EH4OIq/ninEEpRsMc3OVFtI6AjgQ3OIvNxkFEg2FJzM/I9W8+dyOqRUZIiFLiDDVSKJPHotiT5TqTFra0wy1n
+            edQaEncw6OWfLbtUjEypJL4odcU0Qh3xl1qmcjmtof5W6hl8BTWNL0pdZIVAfeSr0kafDqiuf1BqIlwA1ZGvzjYixOsM5Te1FcLs
+            tBXyWWmFRoadoazvbpWjiH5X20lGpHXl30q57dpyeLMahhjQqhru2oYUPMzZxP9US/WFAJVMRzEN/stZzqjeUUoNvSTfwZBWeZmp
+            Jmu7GtJQr2BqQpoA5idCSwQIWk/xvNnU0YehI46fEp2h24HdSt1likbqV6WNuT9CA/OTs3beBfbZalXs3nmL4pOzttGH/tlqle+h
+            eYP8i14XF/C8FV6mtHerLADAXcghPD45YM7IQZcHzL1Zy+MbPSErvdymOGuo7Geq8zYlmUwHUBzrKAPnypoaMFehpLl1tHIVza2h
+            lStoDv2sVD1DtbNS5cypm1VEl1mamVMxc+llTrXM0srKlbIKnaxcJSvXyEoVMkQfc6tjTm2shjKG6GK1wwM5lz9vWCCyiFqavJFf
+            GyXhA/b5f5VMqSOZWifu03N3MxYgUJL47xnPxM380d4S5gC/p8td/JXhGNq86NsNsilVBXSgG5Bju6oK6DA75/FRRoZGPMIK6Q5p
+            bcSENH/kRLFYfC/PQx7sd/ebVEtcUHfCFB0E0VTqTZihlTh0GAwWdpdYHN2rNpJpQ2HBKUq5vBR42tVvdBxhXvR+k8xjt6wX0A21
+            GCsiapB9lEWIas0qshOrVTtvfwHO9K+u7y5vXl7eMMeSmgZP3viXXqcOv/H0YzhYGaykWv2oL35yocVJgTKvK/o1o8U0JR1X6Ous
+            m0LptRXj48St1Vg1uaGomI8HATAdDrZTAglK1KNX5YVcPFHqM3LYfv1pvfmyth5FMF4kqIyp1HVAJ/4iTeuPHQASvH2YGBXOqMJB
+            hYhOXuL929ybHldWio5qSsladzkw95G81oGUWVcUcJ+QgIAWVoHgzigcAiuzAKCeMzkIpKwCgIYAUlTvhoWSNMC6ZFFnZnLXaksG
+            J/LfFvKml9WoLz5bzQxnpmilf3WP1Hkzl2U6OLOY+btWAn5Bl/ZEAiPkW18BNKtbxGigmWU0rMt9V9fWhCv8m656hvvUFhxOHKgS
+            48D9OQUMlyqq+0XHIk5o6t2M58oQ4XNm0Aw+stzczXcDJeHrj9gBeHQRdTnXxnQ+L7ljy2500rEg7KGvGa2ctnKyhn61VquO3Y1F
+            ru4+q8LJxl4Qjq8zjrd88IiSgiEp8PP0u9x1qey8yVtG5brXmcvIjl1prjVNTgzqT5/W6fPe+xGTwaeuICe6fmUK3L/j+z5Ch/uu
+            Cz+59Mzb173pYyO0aPyuw22K7P03zUx4/NBpINUxLhIthQr3+KFRFliunC7NNTW0LBbCsu6QCBvj8Geujcb7V69Xtl0hl6csMh9V
+            /32mW0+qU7Ul2M22FvOhWaHgusrnvpEUE5j3VbJOMhruWFxMKiGxiotGX47Es68y2ZV+ryd/WpCTvXikr0rMI07kshtOxtMYLZsG
+            zWP7Vgo8dRJoTOG61YRPcO3LTTyPjPqUY85LikLTFpPAoaNXnLDIJfk/t9t8fpDb3vQGz3GfdUkbtdfyg1LsxG2Ou1xL2tj9uQ5/
+            rZO6OeJC1Wojjse5yyOJymG21dSS2Kpjbe70wyF0yN1pc9TrVrI7IJ05jvPVY0R9M9HrGE6wOeor06HqwaOIo8xVnweOY64pY8b5
+            nlq2wSIOkLnTNaK3RTXPeV1zEtMg5jVsTNdx6NypwJa1VbotDV1Sj03nmvMBryNcEnPMT6G30E2rOWJuWZyPW9TzcoPboL60Vua6
+            8YKumTysFdWTlb1eu9dm7kCn4tYZl8BnpU8zIjGlZxUPGOZBBuWvIPJVflb+3mFJYivkKh4aEPIkd4w7R1WrtI7CrE39LJ7dBdQS
+            dvEKNWwGl72g2Qr8D7e14LIU2CgQS0GxElQLQa2upu/WrAPBAfh2gxsHBvqFedBUX46gRHToHyW6h/zdcSodlsKhfSjRPFCtQ2/s
+            UjwspUNSza13oDqHbOZSOHRlw6xt6BuYrqEPB6nBTyatGWYcW4cVNK1DNkiDLw6SFbqGYBqntoFqGpLTSnWNXM8w+FJJLWpoGaKi
+            U88wdAwJV37t6FqGqWFY1Q0dQ+oXjuWJ6RY8L16pboHrFXVkI6pTVAhMpz7hzPPnaqd0V6pL5HoEq2rrEaYOoVWzdAhDf0DyLGqc
+            7NAdXLpCoScgKoKpHugqwUG3zIVgbTovqBqb7Ck2JmnoqhdULQPcvqH6Dxn+Dxn+Dxn+Dxn+DxluyXAzQBe/VViEBMg3d4SanD/Y
+            1pKq9Jmd7tuI6aWnM9QbSE/RSh9HO3MHd0pPIrtFKp8V5+RqNEVmwW26ifcRzy1oQDYjPjVworqAQ9PQfe52Zp1BeSvr2R/jLi3H
+            qfoVtIpO2POI+3WyE+gpBOTA8mcyyyFVvTIE4MvyPWqwBIdx8RaES4IMfZFu6UNNu83uYUv8z11/5g8A4zBZks72oVEHPn14MJXj
+            vru8vfNvLt++ubkT0Dorm3gi678GTbyRCTNEUpYLu9FkIN9/OI6fvpghT0x0HvlI2XZHn2auOAJabKI9fVQJSfvjXhWikR8m7MK7
+            vPjOn59KMiTRgYKp7FGp7ThVM1wHvJ1Ix8F7DtKIPjUUMRbTgs8kc4iK2e5hSejTqHTR8heSrRnVOjASYcghVneoPGptti7vUWBa
+            LDLOjd1Od9TrdrtPQhcB1h30RxXAiudwWdoWOc2bz5S30Y4QOvRGnfGsP+hO6H9r9ydTtaagb0Q8jQeBOVvLtTkbdMYKtGOtJsmj
+            xaqSvFq1nrj1YW1GpQ9EnlmHqp4ZpI2gq4YmI5mJ8h0p+0lj2mIoP/EcstlP9hk9bCcyQ25R388I8PRkzK5pNsrzOiMQc8Uaw3YU
+            BtNx3B/H0bgfh4NxQHrDIOpHvd54Qia9OB5F3XHU7YZhPAqCQRz1e9E47vXCwTQOu+NhBTrsYuwqYI/bpttOTpuOgzSdz72GBePP
+            lH+khsT0yD19CLnx9vz21q5Nd6Vcb86fjXdIOpoESpWw9Ame/FG34vWdPBhS8gl7M8k4cP872JcEt3sKt3uS22vvTKsA5OhXdWPC
+            k39oI1W4lbdvYBkd9RqOOaFJuXgNRqvh8QjE5IoYbrL+DAWb9OE7BQ366uh/M0GDDsL/3DuGACLDyRQkyzDqD4ZRNInjKRkNJhMy
+            It1w2AumJBp2e4vZuD/sdmcT+BqRxSSYTqNoOBuOp92D0ZESCYs8USUUSgNdUlXIvrpy63+CRJLUbCvUrC2RkgU6lgz0E5iMDT0Y
+            og8I8YHoUoe9TMiztRvT1VhvViwhgfF5v90iLT48q8KDEUOOxmOj+U4pZL6j+7cSQKJ/VAIpOH59kJgeScoEJKDPaw+oStMb9Njj
+            v6Mw7o360ygkk0G/PxqOF5NZPA5G3dksXpB4EMxGs+4iGgLMsGqpS+zpRDTYrcbViiaeinx9lJh6o1rrzAvQorxJGwEPxZoxz4A8
+            v+g4xoIX424LytRe6wpjPwmRRRF7r1vmZ943Ojv/lD4WT2M9MZeE9pC2lkoiWa24u6RFn4Jtsycv+IDpR55VQhBGerhAj1qTpZJL
+            Qn8T++BUErJd7sbTvrIHvK27/nnUQFFi+b6UF6Aq/EzqQ0virW7agQJAe8G7fuaBZ8gxYBG3VQiietej/6dmGDD8XE9MMMAeKZ97
+            6PvmTGhpEY6Uh3V6sDfOM2Omn+++jrJA5UhLlBKEF7R1xmKM6Uvt7FfZIxP5AsybmAVoa2uR5s2tEvx1n4qVrF+t475jBr52w+Yx
+            edAI16KjenokfnETXRVaNLGx8lMRDNrj0lww0UdaqWLFHqulbTIboBrIzx6gZpX/9+2b6xesPRu79fD089NOxYlOLdi/lBIGnfTn
+            qI3oKtNvLQjQcnam31FGH8qVIQWMkU3a/Uh6UFbPETzsHoe+vSkcVDPBiV49X9L6Z3w9u6soj9VYdDVfMm7+mOUrWaneazXuA0tr
+            y8gPLv+uro/J4f+NX4xCt52//fNRJnMISZ6Pr4I78gtJCRVNjos9dnpjqYYUoUZWHee17wrd7PGsUdpSZdjHs2/I+n1ErpCXP26g
+            3XmytFrt4lYSH2H21M6wJ5mYqeO8tlRyUal4YVy/pRTQu04B9faLHuhGqhi8eLo+ZkqxOnX3ahHbRhE6dT7T4tz1zBh7nViHh9jT
+            7eAMmFezQ2/hY6vWKzSY/VqyrYvhsT2oUMi1/XJevpnjMYXVO5DCTcaaRtZz1VqGdecKDKTLT44O/uaYPlo2mTvMUSOoEuVorYo5
+            Fub3XaGMqhiZ56Owy5kJMi+sESuYSNkhMPvDETNINfA5bnGo8Wjl1oJxV+FAC6Nl6qYM6bmmxVtVkMgoLLCq5pZaTrBDtlQjSEsP
+            JuX9B/s42fmhLSzOacHPhZjgFXmIDVLzhhU4E8kf4a6P/ijNWdlbNi00r2r+wnVJkDF/6LqF+dLw5triVVsreTbYqxKZ9fK3SBsv
+            Y9XEo7CJ+RI3q099Yh/UZuy9QHE4RBGkjxcj7cQdXdmSSXMo0DKfW74pPF5b48hviJfcHLB8iM0qwJ5kUviyyOirfOyETs+Y0p6z
+            qwmAf+1oha1aT0OytOz6V/QBcgcwsapzdCxY1fdQVbe4YruwnzlcXMv0L97d3Fxe3+V729tz9hN5tRTRDvn5qs2c0B1TZJCiUgjK
+            EQtoH7kEuzn/T4FQy/H2r8Hksn+sDEMgJR9pbNcDEBnkFE81DSvYf/vu51dXt79cvvBvLn9/dXt380f449er26s3161KFRV/CBJf
+            GApLFJttke9ftz3drQ03QNHecBi4ISCe6gIK4ttGIT3iZgloy3kM49qSnFabDy00fUFprvKKa/kIDDyDeafsgj6aSOFJs63lWjjj
+            IdV6ko6SmULSFksQWKLjA2eK515I1vYOWWuiSpOw46IIaWIqpVXy6NHSp78/m3thmgpdIz+Ou5DJK7RsGGoCC+XM4nNCvtC8hdT/
+            L+VdYS+qY0dStNdQyOrrY09Txw7Rxg5Xxr5TF/suVaymJvY0RezJehi3aJGk/N9/RIkyW0tfs1jibYeHU2HOloM5n9WPp/SXezbx
+            bg87WFMVSRoQHSyXIqQKO6T6ldMVML5ldTo3lxdvfn999V+gLLD8r6j7XO1jESRLdumHRJ+ALfbrHXWfHSlTGhU7rHNPIdyWSj2R
+            GU5O/lNSpKlip+USO0fgAd6jmwl4x5UOXQFmbk+RsAaAQEwouLNrS2l5A7U6Um8tcZ1q+AuOMvA5Grny7uTJeh4nwhmEh3Q+Ze0I
+            G+q4i0d0IlfPD1g3Fn0KrrsPPtO0zx7FZp+WZgc1Fk6tII9WJcO9sGo+6/ARnNDlZqJTueZyaMiqy5U+4+fCRLFyBer0exPSlzMD
+            GoL9ehOTzt3lzfU5mHR3N+fXt1d3YNQpkS4HhstYizjXqo48G6JfmkytWNHWe9sHLWZMEafXBLGVfBBN0VV9qNpfHpB0PCmg6PIF
+            8euHF9ekcyzYGI2LsYRgebMyCgunUpDukgVwzYHduVofSfaw9LIMExhSLo05EpnI9eqM9hSZdrnfYV53HlizjvALcT8ckqcAlxF6
+            l4KaP+xljqNPxhNe4zic/ztyaal5Hiw5oJ1xPJX3mXOtcJW6OynckGZX+XKp0x1oR8nigT+2QDNInzZ/gOoigh0OEFiYoq/Z/y2n
+            /f/cGUuLPlHlQ+26Rp5WxcunmpK21Aufe/82n14CqaauKzo04MFU7uSKvXbYwip3iT7xNavO3/RVK+TlKskS37cJG2OsvQ/X3rwd
+            xDx0Iz5kE2/+OKaNNxxFhW2lzHHvyJtdZVIC55i3QUrzE+TSlEIzguA1wUfL62UhoDXltS92ga+pi3/6ns/rc3Nui1afknVstvmP
+            q+sX7hYrenFpt1nLrCGAeMNdG/YNdjTF6/Y63U63pLa4DMgrs/uAx2GP/Trbb6l2KJ40zQkvl+X3mMSmD9ltD6OH+89/19DAB92O
+            DFSqdiTXeW+eNZ1xFL+cWEwvbdVoPvvgPHVw2iMK+toW+kRtUetQJnR3f4u7xJsmU9Pr2ngLRptpt2u2oPfUrAEaOCz48UHJ2ULz
+            pPRgDEfJFT15zCTuGedDqscG7NYdTNXygRLGE2eTVe4YmloqA6HMJsC4tSmTeYscuS2vSBfrONpF9jv0lJc240BpqzxPG08ia3dA
+            X0iGeiJzGUP5BEt7I+ao5UKdAvlLssWVAYMljVzeKrmMnMg0x9KOny26Zn3DnCXIzViGtzy5LUnz7qrnOizmdUuyuReVnMnYrSru
+            7Osmeo6U6xbEitAWURdNr16Ul+ZUV8CUZFLHaiHp0xXKYrnTi+LqXOlF3Rqp0Z2VkaTkChKVqc9ddUvB4nnO7XI0uXlRrSylucZO
+            dbKXKwTCE5c30eWMLsfq3JlmzarFWJEo06xWuiDLcloWEeXluSyNevXWojN7pVGhcjVWpKt0VnOsRzxNpVZabzXWyUVZVtexaGpk
+            nCypWgbUvRDLk0tqtaqWYd1HA59CxQMpicTvmansyxY9qKb5NqzcVjnCu432K06IQs1WZ36pFJAve9Sx8vVEfhya2S9B+5d/eHt5
+            cXf5Qj2YuXjz7vru9uhvOBt3aGunQbJe0FNGV4yHv67Ih/KsR+YsIKjN3v1jGLTpswkHI6/GFTGG9jfixCyfLjqeSbd/LORZr22l
+            14MGYVlSp2XqSol6YqzCtXcqni8ENR3+bfeatklR19Q61kmHMKgyegksgZ1o52222w0AUp8O/T4b2IhZc5nAiF2GqRQsSw9qjJUF
+            21oZHnlv+VUfBpHnRVjreRVum0+xvHOrzB2Zh5veTxzVUW+RFoupSA5QK7+SkpOyyhlauH2UxL1y8HQHSxOefdeZmhWrjTlFZW6d
+            +hhh6S+tQHgrU1+dRrWctuXPB4h+mhaHH3DtgfIdB1M/ZTNzh8cit7KWGNSZTFrr4zvzLGuwFCYosrEaaYNc8I6eOlKuJn5ZxRNR
+            tQ/Vd7FhhzNv6WeWHVcMXec/i7c1guXJW5utAmnlYzkoW0Zrk4Hlbmy2qrPaeWqD0lRhB2Jk5nErQyafLVHXiUe5CmFeSmEXfP+p
+            zg1fZDPIMzGgXr3Cs2dutFY1nKfseqij7wdsOOxmO2ZCqKcuVepolWBR4imPpFPx/RKMryC/tOspyKjRJYfo1ixmnzGRGhtz8+bV
+            5a2dttLdGosRMOsdZ5p1e2Opn8RUiMPiMsIBGzd2bc/cp7E6qNogLjUc0P2mCBz00St8Ji6VDWrpC/z5TXtY+rHtz2BOvji/ubq8
+            xRXxol0HjIFVdtos0gkhwI/0+LlsVJzKKeN5UjAERldGGXYR8uJcuA2uadzHHU4a2cwmDAb8OJRJSRC3N+vlgxqeqt7CKRj2Sc9o
+            G5cDvYZxmbD0KW3swr3rHkqrPNK+9YQgciSO69Bz9zpHZTU2XVwKt2ot11Y93i0L4rbDmY745LjRmePRcTXMuFbsAHpjq+zdcRmq
+            Zb48ruPXPP5lggJbnRbGSsIS+fw7qJ+gLuwe8ptw1vXt4jZcnseAHyawXAZVFw4scK5+rWu2THsqOgcry+q8JJjB1U0NH2J5n9l+
+            ZTy44nTT0RzP3ac74mpQCvVYn56oa1mkKKHDsS5JwvjEDckzRf1gfuG5d0H/ICk2WCcG3zFYg8xY8ARPFscRZIoP/9BFvJ1r0a3m
+            on91fnt79VJsvbfVhDad5QVjPI2SxnFqHQI56FJCCn343KP/6vL3t252MhIRHLTujE3J2Uk9W+nAlZfbvofkRT3I96mkOzPTgLG1
+            5eVpm2ul7RJ33W9Itll+Jt5mLcM8dbv0S7K7BybxQL6D/M70TGhGClQ+75YnlaW80B4Jie6JIygpQi5KHOwhhl0UdaCDCKT/lr4d
+            QlFjqm3vGXfI2pnFnSJIYPa++0Hkd+L54FaDnp+bC+pZbrElH5D5qeSlc3eyhJ8pIso1tUJH1y+sqTkTpAmeM5MdM3rY5fMnz86T
+            Lp03TyxLy33H/PCrsfS0peZ18mchwVOvkDet1BSwpmvdsq53w7qpZTc0YNe6S3rAPdIn3CFt2qkzAEnHwizqqKyNcJJ16UAyUM0L
+            gpviGqN5j6AckuvSAfUAlN+lkHBxpJ5vmW5AudFvLbTMawu5x8S8PCgyMDquKJTfQsBuHjTzXCgUHp9007q2w7pPcr0V2f9kjk9D
+            79IpgRv/JXa/dKef2NFXRkWyXLYccbdqeqfy8N96ob+lYb+865rHqE84Qq11fCrmt8ax6dOPTA85Lm1qqXBYYlX9XAw7E3Mdf508
+            6QyrzvFSE83Y4+Z1Q5HNuZuFJYgHZ3RWVArQkyE9jsFYJhr56sR5K4MqnFQitV9Nrqjwx5f44puu1EQ2PYXubeGY22NNnYq8us/s
+            Mpd3vMikS11uhw36kFOAuicATWfOJSc9DOTrUMPpETdzEbv8vaibF/fu2sLcIcgjLcDS9Mu63bEVJ17KG/Vlrli3B9ad19htOZyi
+            2Ytzv+GcujjdXk1O/2azhdF7Xkn7OT4RiHd9XjE585KpUpWAuT53lldlXjWbc/f0WhM6/54Jnx/MBPNy37y+QtC35HPCGxqz1CCF
+            A3G/Ba4gwcqnEob5OLy/em/zCPp/4f/Qg32qvEEN6pTYwX4O1WjeNFiv9J8nmrjCdON+/GS9Cz7RAJd0s/94LwwnqoWGuSFcZumK
+            tXKg+V6wcSmZ8kMBlVz6NpfTaJ7/1UKSK7I8dCt6NVF3gTH9mKbbCNKP7O/OefqRofCWlSh2DMmiNNmyJWAo89xlQKdFT7BYuA7u
+            +BvVXjE7XjE9nu4rkWcwPHSicEQwepHYe3nzlk2cwqudBrrD88F1gpgaAHxUp412W1Kzza8ce2L7i0W+SfqE/ZzyorCHRUu6SQuA
+            7B8KMjuVApNm4oIK1eyfg+tok4royBxoB30iwFR7U7Ik9NKEEbbW7OSXU7mlUuOl+QLqEx6ar/XIvJicNKHTQWdTPfzNZ5YdmKP8
+            cubxZ1MVMAs7M/D8myCgVfJoNEWyGs+/YdlE9IYnZemeJJyG8hqhRKhGIqX8YUIVTywfbj7KshQQ5oC1q1KZA4R+n4r5qRA4xt6n
+            gEIO3Fz0Kz03y1Aa1jhqQ2lo77DfqKMYgcqTm7tQht8ruQz2/FERWIab9GOwFn41FG3rDnk1HGQYDX4wRhd+CFsIyDdOaglsRWi0
+            RJKt5gsaJaoNAczGJXXIxvlKXm94v/N276cufSBdrS0oIq8dsQPIeddBFHpEsmHVtLub6gz+q9doNTp/2iQ5zS2SuKA0LTqcYBet
+            0WNLDQP2yki8X20z0xUT7U5tBkYBGkFPGfWLfiIPWYm9aeJsngC6cFTRMts0W0bXTUxumAroN3xrKV+kZuU1W/DozJ4cevUBxycr
+            IaO6+YGy5heeF97UzwjzwBDQoPfEtYgrzvZw0VPvuBFZtujOLbbVPOJb71Lsoe//2az2zx/qdmCsYLnqqzqsalYfgSKYnS1wR39G
+            LUkXevbiGMKTMCBL7pUDdW8fcaFJ0og+PFOJlrOpgUg93j6znsTBHis7+BS62WHPnCupygy68AEKbN5/w1bn44d5w3wvCX+f4PGv
+            /C0hCwz7/PhXEww2jPk3+fXR1OKlAHOoPOVKDu6MwHSwvFQHId88z29Iz2FmwyQGXVGvtyLU1ejLh7qDsrqmFF2R9COo367qGVkF
+            azClgOkSGnu2ki+YORtwnFf78mrx5staWB9fUrCqwiD6ZNUVpm0XzEf6RifjDd9nj8v7zJb0ffGaPD8Hun3IYF4vvya7U2FqNk/+
+            H9NBYaNvFAEA
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import gzip
+          import hashlib
+          import os
+          from pathlib import Path
+
+          encoded = "".join(os.environ["SOURCE_GZIP_BASE64"].split())
+          observed_encoded_sha256 = hashlib.sha256(
+              encoded.encode("ascii")
+          ).hexdigest()
+          if len(encoded) != int(os.environ["SOURCE_BASE64_LENGTH"]):
+              raise SystemExit("Transition Visualizer payload length mismatch")
+          if observed_encoded_sha256 != os.environ["SOURCE_BASE64_SHA256"]:
+              raise SystemExit("Transition Visualizer payload digest mismatch")
+
+          compressed = base64.b64decode(encoded, validate=True)
+          observed_compressed_sha256 = hashlib.sha256(compressed).hexdigest()
+          if len(compressed) != int(os.environ["SOURCE_GZIP_LENGTH"]):
+              raise SystemExit(
+                  "Compressed Transition Visualizer length mismatch"
+              )
+          if observed_compressed_sha256 != os.environ["SOURCE_GZIP_SHA256"]:
+              raise SystemExit(
+                  "Compressed Transition Visualizer digest mismatch"
+              )
+
+          source = gzip.decompress(compressed)
+          observed_source_sha256 = hashlib.sha256(source).hexdigest()
+          if len(source) != int(os.environ["SOURCE_LENGTH"]):
+              raise SystemExit("Decoded Transition Visualizer length mismatch")
+          if source.count(b"\n") != int(os.environ["SOURCE_LINES"]):
+              raise SystemExit(
+                  "Decoded Transition Visualizer line-count mismatch"
+              )
+          if observed_source_sha256 != os.environ["SOURCE_SHA256"]:
+              raise SystemExit("Decoded Transition Visualizer digest mismatch")
+          if not source.endswith(b"\n") or source.endswith(b"\n\n"):
+              raise SystemExit(
+                  "Decoded Transition Visualizer terminal newline mismatch"
+              )
+
+          parent = Path("transition_visualizer")
+          target = parent / "m31_published_transition_visualizer.py"
+          if parent.is_symlink() or not parent.is_dir():
+              raise SystemExit(
+                  "transition_visualizer package boundary is invalid"
+              )
+          if target.is_symlink():
+              raise SystemExit(
+                  "M31 Transition Visualizer target must not be a symlink"
+              )
+          if target.exists():
+              if target.read_bytes() != source:
+                  raise SystemExit(
+                      "Refusing to replace a non-identical M31 visualizer"
+                  )
+              print("Exact M31 Transition Visualizer was already installed")
+          else:
+              target.write_bytes(source)
+              print("Installed exact M31 Transition Visualizer source")
+
+          if target.read_bytes() != source:
+              raise SystemExit(
+                  "Installed M31 Transition Visualizer verification failed"
+              )
+          print(f"transition_visualizer_bytes={len(source)}")
+          print(f"transition_visualizer_sha256={observed_source_sha256}")
+          PY
+
+      - name: Qualify exact M31 Transition Visualizer
+        working-directory: observatory
+        shell: bash
+        env:
+          FRP_M31_UPSTREAM_ROOT: ../upstream
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          set -euo pipefail
+          export PYTHONPYCACHEPREFIX="$RUNNER_TEMP/frp-observatory-m20-pycache"
+
+          python -m compileall -q \
+            artifact_auditor \
+            parsers \
+            schemas \
+            tests \
+            trace_explorer \
+            transition_visualizer
+
+          python -m transition_visualizer.m31_published_transition_visualizer \
+            --upstream-root "$FRP_M31_UPSTREAM_ROOT" \
+            | tee "$RUNNER_TEMP/frp-observatory-m20-visualizer.txt"
+
+          result="$RUNNER_TEMP/frp-observatory-m20-visualizer.txt"
+          grep -Fx \
+            "FRP Observatory M31 published Transition Visualizer: PASS" \
+            "$result"
+          grep -Fx "registry_revision=m31-published-boundary-v1" "$result"
+          grep -Fx \
+            "evidence_raw_sha256=bdaa676acbfb09d86d848070e8a2673c5ce6902657a0b13b2e4293383bec8b42" \
+            "$result"
+          grep -Fx \
+            "visualizer_dispatch_sha256=ff4597411a781c814ab8ef009d30739857411d2a31ff34839d3060b478a697e8" \
+            "$result"
+          grep -Fx \
+            "trace_dataset_sha256=ef5a040c9d30d02f90003e007e447cf0d66238f31ed27e3be92bdce31ad19fff" \
+            "$result"
+          grep -Fx "trace_contours=2" "$result"
+          grep -Fx "transition_frames=800" "$result"
+          grep -Fx "active_zero_after_observations=702" "$result"
+          grep -Fx "active_zero_roles=9" "$result"
+          grep -Fx \
+            "primary_computational_organization=retained_relative_phase_interference_and_resonant_selection" \
+            "$result"
+          grep -Fx \
+            "classical_bit_addition_primary_mechanism=false" \
+            "$result"
+          grep -Fx "balanced_ternary_notation=-1/0/1" "$result"
+          grep -Fx "active_neutral_state=0" "$result"
+          grep -Fx "temporal_scheduler_modes=1/7,7/1" "$result"
+          grep -Fx \
+            'transition_classification_counts={"active_zero_to_polarity": 12, "direct_opposite": 0, "polarity_to_active_zero": 5, "retained_same": 783}' \
+            "$result"
+          grep -Fx \
+            'route_leg_counts={"first_leg_to_active_zero": 5, "non_route_transition": 790, "pending_route_completion": 5}' \
+            "$result"
+          grep -Fx "thermal_contours=4" "$result"
+          grep -Fx \
+            "thermal_contour_names=historical_release_benchmark,current_comparative_baseline,current_hardware_sensitivity,current_thermal_profile" \
+            "$result"
+          grep -Fx \
+            "historical_and_current_contours_separate=true" \
+            "$result"
+          grep -Fx "physical_temperature_measurements=0" "$result"
+          grep -Fx "historical_binary_heat_peak=0.051000" "$result"
+          grep -Fx \
+            "historical_active_neutral_ternary_heat_peak=0.003250" \
+            "$result"
+          grep -Fx "historical_heat_peak_ratio=15.6923076923" "$result"
+          grep -Fx \
+            "historical_heat_peak_relative_reduction_percent=93.63" \
+            "$result"
+          grep -Fx \
+            "thermal[historical_release_benchmark]=8ae48a85c971d6fe8d136fd08b45ac7d801c6146c82eab2ac785c4e8318cb140|group=historical|physical_temperature=false" \
+            "$result"
+          grep -Fx \
+            "thermal[current_comparative_baseline]=c7a66b2a99608b51508cc249459917d23ffebc4258501afd8567ca99afff6add|group=current|physical_temperature=false" \
+            "$result"
+          grep -Fx \
+            "thermal[current_hardware_sensitivity]=9b8a709f65e156b160facfb977a8b7362b928344dc45c840ef4b9eae637313a0|group=current|physical_temperature=false" \
+            "$result"
+          grep -Fx \
+            "thermal[current_thermal_profile]=1c92e0fbfb54f19803c70970b0dbf135c4bb37121a34407d64639ad6a3582eee|group=current|physical_temperature=false" \
+            "$result"
+          grep -Fx \
+            "dataset_sha256=0ad87af2486798918a86a8a9fababdb45cb2b633c0f66e7c9b80b590ca8ed304" \
+            "$result"
+          grep -Fx \
+            "visualizer_dataset_id=63a1feb9-1835-579e-ab00-eec4569e8ff3" \
+            "$result"
+          grep -Fx "source_execution=forbidden" "$result"
+          grep -Fx "metric_normalization=forbidden" "$result"
+          grep -Fx "thermal_contour_merging=forbidden" "$result"
+          grep -Fx "semantic_reimplementation=forbidden" "$result"
+          grep -Fx "source_mutation=forbidden" "$result"
+          grep -Fx "downstream_writeback=forbidden" "$result"
+
+          python - <<'PY'
+          from dataclasses import FrozenInstanceError, replace
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          from transition_visualizer.m31_published_transition_visualizer import (
+              M31PublishedTransitionVisualizerError,
+              build_m31_published_transition_visualizer,
+              visualize_m31_published_documents,
+          )
+
+          root = Path("../upstream")
+          first = visualize_m31_published_documents(
+              root,
+              loaded_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+          )
+          second = visualize_m31_published_documents(
+              root,
+              loaded_at=datetime(2026, 2, 1, tzinfo=timezone.utc),
+          )
+          if (
+              first.dataset_sha256
+              != "0ad87af2486798918a86a8a9fababdb4"
+                 "5cb2b633c0f66e7c9b80b590ca8ed304"
+              or first.dataset_sha256 != second.dataset_sha256
+          ):
+              raise SystemExit("M31 visualizer dataset is not deterministic")
+          if (
+              first.visualizer_dataset_id
+              != "63a1feb9-1835-579e-ab00-eec4569e8ff3"
+              or first.visualizer_dataset_id
+              != second.visualizer_dataset_id
+          ):
+              raise SystemExit("M31 visualizer identifier mismatch")
+          if tuple(
+              frame.transition_frame_id
+              for frame in first.transition_frames
+          ) != tuple(
+              frame.transition_frame_id
+              for frame in second.transition_frames
+          ):
+              raise SystemExit("M31 frame identities are not deterministic")
+          if len(
+              {
+                  frame.transition_frame_id
+                  for frame in first.transition_frames
+              }
+          ) != 800:
+              raise SystemExit("M31 frame identities are not unique")
+          if tuple(
+              contour.thermal_contour_id
+              for contour in first.thermal_contours
+          ) != tuple(
+              contour.thermal_contour_id
+              for contour in second.thermal_contours
+          ):
+              raise SystemExit(
+                  "M31 thermal contour identities are not deterministic"
+              )
+          if (
+              first.trace_dataset.contours[0].record_count != 96
+              or first.trace_dataset.contours[1].record_count != 4
+              or sum(
+                  frame.contour_index == 0
+                  for frame in first.transition_frames
+              )
+              != 768
+              or sum(
+                  frame.contour_index == 1
+                  for frame in first.transition_frames
+              )
+              != 32
+          ):
+              raise SystemExit("M31 separated trace contour inventory changed")
+          if first.transition_classification_counts != (
+              ("active_zero_to_polarity", 12),
+              ("direct_opposite", 0),
+              ("polarity_to_active_zero", 5),
+              ("retained_same", 783),
+          ):
+              raise SystemExit("M31 transition classifications changed")
+          if first.route_leg_counts != (
+              ("non_route_transition", 790),
+              ("first_leg_to_active_zero", 5),
+              ("pending_route_completion", 5),
+          ):
+              raise SystemExit("M31 active-zero route legs changed")
+          if (
+              first.active_zero_after_observation_count != 702
+              or first.core_declaration.balanced_ternary_notation
+              != "-1/0/1"
+              or first.core_declaration.active_neutral_state != 0
+              or first.core_declaration
+              .classical_bit_addition_primary_mechanism
+              is not False
+              or first.core_declaration.temporal_scheduler_modes
+              != ("1/7", "7/1")
+              or first.core_declaration.opposite_transition_routes
+              != ((-1, 0, 1), (1, 0, -1))
+          ):
+              raise SystemExit("M31 phase-interference core changed")
+          if (
+              first.thermal_contour_count != 4
+              or first.physical_temperature_measurement_count != 0
+              or tuple(
+                  contour.contour_group
+                  for contour in first.thermal_contours
+              )
+              != ("historical", "current", "current", "current")
+          ):
+              raise SystemExit("M31 thermal contour boundary changed")
+          historical = first.thermal_contour(
+              "historical_release_benchmark"
+          ).payload()
+          focused = historical["focused_binary_ternary_comparison"]
+          if (
+              focused["binary_heat_peak"] != "0.051000"
+              or focused["active_neutral_ternary_heat_peak"]
+              != "0.003250"
+              or focused[
+                  "heat_peak_ratio_binary_over_active_neutral_ternary"
+              ]
+              != "15.6923076923"
+          ):
+              raise SystemExit("Historical thermal comparison changed")
+          historical["release"] = "forged"
+          if first.thermal_contour(
+              "historical_release_benchmark"
+          ).payload()["release"] != "FRP v0.9.3":
+              raise SystemExit("Thermal payload leaked mutable state")
+          try:
+              build_m31_published_transition_visualizer(None)
+          except M31PublishedTransitionVisualizerError:
+              pass
+          else:
+              raise SystemExit("Non-audit M31 input was accepted")
+          try:
+              first.dataset_sha256 = "0" * 64
+          except (FrozenInstanceError, AttributeError):
+              pass
+          else:
+              raise SystemExit("M31 visualizer dataset is mutable")
+          for forged in (
+              lambda: replace(first, dataset_sha256="0" * 64),
+              lambda: replace(
+                  first.core_declaration,
+                  classical_bit_addition_primary_mechanism=True,
+              ),
+              lambda: replace(
+                  first.transition_frames[0],
+                  retained_state_before=-1,
+                  retained_state_after=1,
+              ),
+              lambda: replace(
+                  first.thermal_contours[0],
+                  payload_sha256="0" * 64,
+              ),
+          ):
+              try:
+                  forged()
+              except M31PublishedTransitionVisualizerError:
+                  pass
+              else:
+                  raise SystemExit("Forged M31 visualizer value accepted")
+
+          print("M20 deterministic visualizer contract: PASS")
+          PY
+
+          python -m unittest discover \
+            -s tests \
+            -p 'test_*.py' \
+            -v 2>&1 \
+            | tee "$RUNNER_TEMP/frp-observatory-m20-full-tests.txt"
+
+          grep -F "Ran 584 tests" \
+            "$RUNNER_TEMP/frp-observatory-m20-full-tests.txt"
+          grep -E '^OK( \(skipped=[0-9]+\))?$' \
+            "$RUNNER_TEMP/frp-observatory-m20-full-tests.txt"
+
+          git -C ../upstream diff --exit-code
+          if [[ -n "$(git -C ../upstream status --porcelain)" ]]; then
+            echo "The read-only FRP checkout was modified."
+            git -C ../upstream status --short
+            exit 1
+          fi
+
+          python - <<'PY'
+          import subprocess
+
+          expected = (
+              "?? transition_visualizer/"
+              "m31_published_transition_visualizer.py"
+          )
+          status = subprocess.run(
+              [
+                  "git",
+                  "status",
+                  "--porcelain=v1",
+                  "--untracked-files=all",
+              ],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.splitlines()
+          if status not in ([], [expected]):
+              raise SystemExit(
+                  "Unexpected Observatory changes before publication: "
+                  f"{status!r}"
+              )
+          print("Read-only upstream and one-source-file boundary: PASS")
+          PY
+
+      - name: Commit and publish only the M31 Transition Visualizer
+        working-directory: observatory
+        shell: bash
+        env:
+          SOURCE_SHA256: 33de1cc15240dda0fc75cdb1feb8efa43e0d4e08026d98e8521939ae7162a96c
+        run: |
+          set -euo pipefail
+          target="transition_visualizer/m31_published_transition_visualizer.py"
+
+          python - <<'PY'
+          import hashlib
+          import os
+          import subprocess
+          from pathlib import Path
+
+          target = Path(
+              "transition_visualizer/"
+              "m31_published_transition_visualizer.py"
+          )
+          if target.is_symlink() or not target.is_file():
+              raise SystemExit(
+                  "Exact M31 Transition Visualizer source is missing"
+              )
+          observed = hashlib.sha256(target.read_bytes()).hexdigest()
+          if observed != os.environ["SOURCE_SHA256"]:
+              raise SystemExit(
+                  f"M31 Transition Visualizer digest mismatch: {observed}"
+              )
+
+          expected_untracked = f"?? {target.as_posix()}"
+          status = subprocess.run(
+              [
+                  "git",
+                  "status",
+                  "--porcelain=v1",
+                  "--untracked-files=all",
+              ],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.splitlines()
+          if status not in ([], [expected_untracked]):
+              raise SystemExit(
+                  "Refusing publication with unrelated changes: "
+                  f"{status!r}"
+              )
+          PY
+
+          git add -- "$target"
+
+          staged="$(git diff --cached --name-only)"
+          if [[ -z "$staged" ]]; then
+            echo "Exact M31 Transition Visualizer is already published."
+            exit 0
+          fi
+          if [[ "$staged" != "$target" ]]; then
+            echo "Unexpected staged publication boundary:"
+            git diff --cached --name-only
+            exit 1
+          fi
+          if [[ -n "$(git diff --name-only)" ]]; then
+            echo "Unexpected unstaged tracked changes:"
+            git diff --name-only
+            exit 1
+          fi
+          git diff --cached --check
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Add M31 published Transition Visualizer"
+          git push origin HEAD:main
+
+      - name: Publish M20 summary
+        if: success()
+        shell: bash
+        run: |
+          {
+            echo "## FRP Observatory M20"
+            echo
+            echo "- Exact M31 transition-visualizer routes: 1"
+            echo "- Preserved execution contours: 2"
+            echo "- Exact source-linked transition frames: 800"
+            echo "- Active-zero after-observations: 702"
+            echo "- Direct opposite transitions: 0"
+            echo "- Active-zero first route legs: 5"
+            echo "- Pending route completions: 5"
+            echo "- Balanced ternary domain: -1/0/1"
+            echo "- Temporal scheduler modes: 1/7 and 7/1"
+            echo "- Historical thermal contours: 1"
+            echo "- Current comparative thermal contours: 3"
+            echo "- Physical temperature measurements: 0"
+            echo "- Complete existing Observatory tests: 584"
+            echo "- Source execution: forbidden"
+            echo "- Metric normalization: forbidden"
+            echo "- Thermal contour merging: forbidden"
+            echo "- Semantic reimplementation: forbidden"
+            echo "- FRP source mutation: forbidden"
+            echo "- Downstream writeback: forbidden"
+            echo "- Published Observatory source files: 1"
+          } >> "$GITHUB_STEP_SUMMARY"
