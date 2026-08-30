@@ -1,0 +1,454 @@
+name: FRP Observatory M13 M31 Published Registry Tests
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: frp-observatory-m13-m31-published-registry-tests-main
+  cancel-in-progress: false
+
+jobs:
+  publish-m31-registry-tests:
+    name: Install and qualify exact M31 registry tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out Observatory main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: observatory
+
+      - name: Check out FRP upstream main read-only
+        uses: actions/checkout@v4
+        with:
+          repository: maximumberlin76-gif/Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor
+          ref: main
+          path: upstream
+          persist-credentials: false
+
+      - name: Set up exact Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Require manual main-branch execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]]; then
+            echo "This workflow must be started manually."
+            exit 1
+          fi
+          if [[ "$GITHUB_REF_NAME" != "main" ]]; then
+            echo "Run this workflow manually from Branch: main."
+            exit 1
+          fi
+
+      - name: Verify exact M12 registry boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          requirements = {
+              Path(
+                  "observatory/.github/workflows/"
+                  "frp-observatory-m12-m31-published-registry-"
+                  "source-workflow.yml"
+              ): (
+                  23_546,
+                  "ad955333cab8c1aead1f7191de8750b849"
+                  "8525f293524c68525cc196acbed182",
+              ),
+              Path(
+                  "observatory/artifact_auditor/"
+                  "m31_published_boundary_intake.py"
+              ): (
+                  32_266,
+                  "f3cfcbc5c388065f8544b16c07bb988d"
+                  "269ec3745d141de215ff48b0e72e277c",
+              ),
+              Path(
+                  "observatory/tests/"
+                  "test_m31_published_boundary_intake.py"
+              ): (
+                  22_234,
+                  "6366338358552d27b038a0ff3f08b12e"
+                  "8bb376f1b09afa7dd0e59fc0706cf1d7",
+              ),
+              Path(
+                  "observatory/schemas/"
+                  "m31_published_registry.py"
+              ): (
+                  22_102,
+                  "746a71a1fe2aaa1c367d1d6f6e2f65b0"
+                  "c32908ed89626b4d2335fe866f572e3e",
+              ),
+          }
+          for target, (expected_bytes, expected_sha256) in requirements.items():
+              if target.is_symlink() or not target.is_file():
+                  raise SystemExit(f"Exact prerequisite is missing: {target}")
+              raw = target.read_bytes()
+              observed_sha256 = sha256(raw).hexdigest()
+              if len(raw) != expected_bytes:
+                  raise SystemExit(
+                      f"Prerequisite byte-count mismatch for {target}: "
+                      f"{len(raw)} != {expected_bytes}"
+                  )
+              if observed_sha256 != expected_sha256:
+                  raise SystemExit(
+                      f"Prerequisite digest mismatch for {target}: "
+                      f"{observed_sha256} != {expected_sha256}"
+                  )
+
+          target = Path(
+              "observatory/tests/test_m31_published_registry.py"
+          )
+          expected_target_sha256 = (
+              "cd8e89b4682a794dd6543ba779f5758e7"
+              "6e4b344cbbc7c61341bd6caa2694970"
+          )
+          if target.is_symlink():
+              raise SystemExit("M31 registry test target must not be a symlink")
+          if target.exists():
+              if not target.is_file():
+                  raise SystemExit(
+                      "M31 registry test target is not a regular file"
+                  )
+              observed = sha256(target.read_bytes()).hexdigest()
+              if observed != expected_target_sha256:
+                  raise SystemExit(
+                      "Unexpected M31 registry tests already exist: "
+                      f"{observed}"
+                  )
+              print("Exact M31 registry tests are already present")
+          else:
+              print("M31 registry test target is ready")
+
+          print("Exact M12 registry workflow prerequisite: PASS")
+          print("Exact M31 boundary, registry, and boundary tests: PASS")
+          PY
+
+      - name: Install integrity-bound M31 registry tests
+        working-directory: observatory
+        shell: bash
+        env:
+          TEST_BASE64_LENGTH: "6260"
+          TEST_BASE64_SHA256: 021f47ccf6a665031021f2750921da8305777dead4ff08612d0de14b4c0e3663
+          TEST_GZIP_LENGTH: "4693"
+          TEST_GZIP_SHA256: 6a5adca948d5dab50fb721c1c44dfdedf4fc5f796b4420c21bc560558f0f00b5
+          TEST_SOURCE_LENGTH: "24161"
+          TEST_SOURCE_LINES: "665"
+          TEST_SOURCE_SHA256: cd8e89b4682a794dd6543ba779f5758e76e4b344cbbc7c61341bd6caa2694970
+          TEST_GZIP_BASE64: |
+            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
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import gzip
+          import hashlib
+          import os
+          from pathlib import Path
+
+          encoded = "".join(os.environ["TEST_GZIP_BASE64"].split())
+          observed_encoded_sha256 = hashlib.sha256(
+              encoded.encode("ascii")
+          ).hexdigest()
+          if len(encoded) != int(os.environ["TEST_BASE64_LENGTH"]):
+              raise SystemExit("Registry test payload length mismatch")
+          if observed_encoded_sha256 != os.environ["TEST_BASE64_SHA256"]:
+              raise SystemExit("Registry test payload digest mismatch")
+
+          compressed = base64.b64decode(encoded, validate=True)
+          observed_compressed_sha256 = hashlib.sha256(compressed).hexdigest()
+          if len(compressed) != int(os.environ["TEST_GZIP_LENGTH"]):
+              raise SystemExit("Compressed registry tests length mismatch")
+          if observed_compressed_sha256 != os.environ["TEST_GZIP_SHA256"]:
+              raise SystemExit("Compressed registry tests digest mismatch")
+
+          source = gzip.decompress(compressed)
+          observed_source_sha256 = hashlib.sha256(source).hexdigest()
+          if len(source) != int(os.environ["TEST_SOURCE_LENGTH"]):
+              raise SystemExit("Decoded registry tests length mismatch")
+          if source.count(b"\n") != int(os.environ["TEST_SOURCE_LINES"]):
+              raise SystemExit("Decoded registry tests line-count mismatch")
+          if observed_source_sha256 != os.environ["TEST_SOURCE_SHA256"]:
+              raise SystemExit("Decoded registry tests digest mismatch")
+          if not source.endswith(b"\n") or source.endswith(b"\n\n"):
+              raise SystemExit("Decoded registry tests terminal newline mismatch")
+
+          parent = Path("tests")
+          target = parent / "test_m31_published_registry.py"
+          if parent.is_symlink() or not parent.is_dir():
+              raise SystemExit("tests package boundary is invalid")
+          if target.is_symlink():
+              raise SystemExit("M31 registry test target must not be a symlink")
+          if target.exists():
+              if target.read_bytes() != source:
+                  raise SystemExit(
+                      "Refusing to replace non-identical M31 registry tests"
+                  )
+              print("Exact M31 registry tests were already installed")
+          else:
+              target.write_bytes(source)
+              print("Installed exact M31 registry tests")
+
+          if target.read_bytes() != source:
+              raise SystemExit("Installed M31 registry test verification failed")
+          print(f"test_bytes={len(source)}")
+          print(f"test_sha256={observed_source_sha256}")
+          PY
+
+      - name: Qualify exact M31 registry tests and complete Observatory
+        working-directory: observatory
+        shell: bash
+        env:
+          FRP_M31_UPSTREAM_ROOT: ../upstream
+          FRP_M30_ARCHIVE_PATH: ../upstream/artifacts/m30/packages/frp-v3.2.0-m30-archival-release.tar.gz
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          set -euo pipefail
+          export PYTHONPYCACHEPREFIX="$RUNNER_TEMP/frp-observatory-m13-pycache"
+
+          python -m compileall -q \
+            artifact_auditor \
+            parsers \
+            schemas \
+            tests \
+            trace_explorer \
+            transition_visualizer
+
+          python -m unittest \
+            tests.test_m31_published_registry \
+            -v 2>&1 \
+            | tee "$RUNNER_TEMP/frp-observatory-m13-dedicated-tests.txt"
+
+          grep -F "Ran 21 tests" \
+            "$RUNNER_TEMP/frp-observatory-m13-dedicated-tests.txt"
+          grep -Fx "OK" \
+            "$RUNNER_TEMP/frp-observatory-m13-dedicated-tests.txt"
+
+          python -m schemas.m31_published_registry \
+            --upstream-root "$FRP_M31_UPSTREAM_ROOT" \
+            | tee "$RUNNER_TEMP/frp-observatory-m13-registry.txt"
+
+          grep -Fx \
+            "FRP Observatory M31 published document registry: PASS" \
+            "$RUNNER_TEMP/frp-observatory-m13-registry.txt"
+          grep -Fx "published_documents=4" \
+            "$RUNNER_TEMP/frp-observatory-m13-registry.txt"
+          grep -Fx "mode_routes=6" \
+            "$RUNNER_TEMP/frp-observatory-m13-registry.txt"
+          grep -Fx "artifact_auditor_routes=4" \
+            "$RUNNER_TEMP/frp-observatory-m13-registry.txt"
+          grep -Fx "ternary_transition_visualizer_routes=1" \
+            "$RUNNER_TEMP/frp-observatory-m13-registry.txt"
+          grep -Fx "trace_explorer_routes=1" \
+            "$RUNNER_TEMP/frp-observatory-m13-registry.txt"
+          grep -Fx "schema_aliases=forbidden" \
+            "$RUNNER_TEMP/frp-observatory-m13-registry.txt"
+          grep -Fx "metric_normalization=forbidden" \
+            "$RUNNER_TEMP/frp-observatory-m13-registry.txt"
+          grep -Fx "source_execution=forbidden" \
+            "$RUNNER_TEMP/frp-observatory-m13-registry.txt"
+          grep -Fx "semantic_reimplementation=forbidden" \
+            "$RUNNER_TEMP/frp-observatory-m13-registry.txt"
+          grep -Fx "source_mutation=forbidden" \
+            "$RUNNER_TEMP/frp-observatory-m13-registry.txt"
+          grep -Fx "downstream_writeback=forbidden" \
+            "$RUNNER_TEMP/frp-observatory-m13-registry.txt"
+
+          python -m unittest discover \
+            -s tests \
+            -p 'test_*.py' \
+            -v 2>&1 \
+            | tee "$RUNNER_TEMP/frp-observatory-m13-full-tests.txt"
+
+          grep -F "Ran 489 tests" \
+            "$RUNNER_TEMP/frp-observatory-m13-full-tests.txt"
+          grep -Fx "OK" \
+            "$RUNNER_TEMP/frp-observatory-m13-full-tests.txt"
+
+          git -C ../upstream diff --exit-code
+          if [[ -n "$(git -C ../upstream status --porcelain)" ]]; then
+            echo "The read-only FRP checkout was modified."
+            git -C ../upstream status --short
+            exit 1
+          fi
+
+          python - <<'PY'
+          import subprocess
+
+          expected = "?? tests/test_m31_published_registry.py"
+          status = subprocess.run(
+              [
+                  "git",
+                  "status",
+                  "--porcelain=v1",
+                  "--untracked-files=all",
+              ],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.splitlines()
+          if status not in ([], [expected]):
+              raise SystemExit(
+                  "Unexpected Observatory changes before publication: "
+                  f"{status!r}"
+              )
+          print("Read-only upstream and one-test-file boundary: PASS")
+          PY
+
+      - name: Commit and publish only the M31 registry tests
+        working-directory: observatory
+        shell: bash
+        env:
+          TEST_SOURCE_SHA256: cd8e89b4682a794dd6543ba779f5758e76e4b344cbbc7c61341bd6caa2694970
+        run: |
+          set -euo pipefail
+          target="tests/test_m31_published_registry.py"
+
+          python - <<'PY'
+          import hashlib
+          import os
+          import subprocess
+          from pathlib import Path
+
+          target = Path("tests/test_m31_published_registry.py")
+          if target.is_symlink() or not target.is_file():
+              raise SystemExit("Exact M31 registry tests are missing")
+          observed = hashlib.sha256(target.read_bytes()).hexdigest()
+          if observed != os.environ["TEST_SOURCE_SHA256"]:
+              raise SystemExit(f"M31 registry test digest mismatch: {observed}")
+
+          expected_untracked = f"?? {target.as_posix()}"
+          status = subprocess.run(
+              [
+                  "git",
+                  "status",
+                  "--porcelain=v1",
+                  "--untracked-files=all",
+              ],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.splitlines()
+          if status not in ([], [expected_untracked]):
+              raise SystemExit(
+                  "Refusing publication with unrelated changes: "
+                  f"{status!r}"
+              )
+          PY
+
+          git add -- "$target"
+
+          staged="$(git diff --cached --name-only)"
+          if [[ -z "$staged" ]]; then
+            echo "Exact M31 registry tests are already published; no commit needed."
+            exit 0
+          fi
+          if [[ "$staged" != "$target" ]]; then
+            echo "Unexpected staged publication boundary:"
+            git diff --cached --name-only
+            exit 1
+          fi
+          if [[ -n "$(git diff --name-only)" ]]; then
+            echo "Unexpected unstaged tracked changes:"
+            git diff --name-only
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Add M31 published registry tests"
+          git push origin HEAD:main
+
+      - name: Publish M13 summary
+        if: success()
+        shell: bash
+        run: |
+          {
+            echo "## FRP Observatory M13"
+            echo
+            echo "- Exact M31 registry tests: 21"
+            echo "- Complete Observatory tests: 489"
+            echo "- Exact M31 document registrations: 4"
+            echo "- Exact Observatory mode routes: 6"
+            echo "- Schema aliases: rejected"
+            echo "- Route narrowing: rejected"
+            echo "- One-byte source tamper: rejected"
+            echo "- Upstream Python execution: forbidden"
+            echo "- FRP source mutation: forbidden"
+            echo "- Downstream writeback: forbidden"
+            echo "- Published Observatory test files: 1"
+          } >> "$GITHUB_STEP_SUMMARY"
