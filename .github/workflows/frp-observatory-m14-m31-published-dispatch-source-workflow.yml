@@ -1,0 +1,553 @@
+name: FRP Observatory M14 M31 Published Dispatch Source
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: frp-observatory-m14-m31-published-dispatch-source-main
+  cancel-in-progress: false
+
+jobs:
+  publish-m31-dispatch-source:
+    name: Install and qualify exact M31 dispatch source
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out Observatory main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: observatory
+
+      - name: Check out FRP upstream main read-only
+        uses: actions/checkout@v4
+        with:
+          repository: maximumberlin76-gif/Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor
+          ref: main
+          path: upstream
+          persist-credentials: false
+
+      - name: Set up exact Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Require manual main-branch execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]]; then
+            echo "This workflow must be started manually."
+            exit 1
+          fi
+          if [[ "$GITHUB_REF_NAME" != "main" ]]; then
+            echo "Run this workflow manually from Branch: main."
+            exit 1
+          fi
+
+      - name: Verify exact M13 registry boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          requirements = {
+              Path(
+                  "observatory/artifact_auditor/"
+                  "m31_published_boundary_intake.py"
+              ): (
+                  32_266,
+                  "f3cfcbc5c388065f8544b16c07bb988d"
+                  "269ec3745d141de215ff48b0e72e277c",
+              ),
+              Path(
+                  "observatory/tests/"
+                  "test_m31_published_boundary_intake.py"
+              ): (
+                  22_234,
+                  "6366338358552d27b038a0ff3f08b12e"
+                  "8bb376f1b09afa7dd0e59fc0706cf1d7",
+              ),
+              Path(
+                  "observatory/schemas/"
+                  "m31_published_registry.py"
+              ): (
+                  22_102,
+                  "746a71a1fe2aaa1c367d1d6f6e2f65b0"
+                  "c32908ed89626b4d2335fe866f572e3e",
+              ),
+              Path(
+                  "observatory/tests/"
+                  "test_m31_published_registry.py"
+              ): (
+                  24_161,
+                  "cd8e89b4682a794dd6543ba779f5758e7"
+                  "6e4b344cbbc7c61341bd6caa2694970",
+              ),
+          }
+          for target, (expected_bytes, expected_sha256) in requirements.items():
+              if target.is_symlink() or not target.is_file():
+                  raise SystemExit(f"Exact prerequisite is missing: {target}")
+              raw = target.read_bytes()
+              observed_sha256 = sha256(raw).hexdigest()
+              if len(raw) != expected_bytes:
+                  raise SystemExit(
+                      f"Prerequisite byte-count mismatch for {target}: "
+                      f"{len(raw)} != {expected_bytes}"
+                  )
+              if observed_sha256 != expected_sha256:
+                  raise SystemExit(
+                      f"Prerequisite digest mismatch for {target}: "
+                      f"{observed_sha256} != {expected_sha256}"
+                  )
+
+          target = Path(
+              "observatory/parsers/m31_published_dispatch.py"
+          )
+          expected_target_sha256 = (
+              "7140a132f929076f22d2c4868b6a068e"
+              "a21c5593b9672bc45df6cb1e2b81c495"
+          )
+          if target.is_symlink():
+              raise SystemExit("M31 dispatch target must not be a symlink")
+          if target.exists():
+              if not target.is_file():
+                  raise SystemExit(
+                      "M31 dispatch target is not a regular file"
+                  )
+              observed = sha256(target.read_bytes()).hexdigest()
+              if observed != expected_target_sha256:
+                  raise SystemExit(
+                      "Unexpected M31 dispatch source already exists: "
+                      f"{observed}"
+                  )
+              print("Exact M31 dispatch source is already present")
+          else:
+              print("M31 dispatch source target is ready")
+
+          print("Exact M13 boundary and registry prerequisites: PASS")
+          print("Exact M13 registry tests prerequisite: PASS")
+          PY
+
+      - name: Install integrity-bound M31 dispatch source
+        working-directory: observatory
+        shell: bash
+        env:
+          SOURCE_BASE64_LENGTH: "4612"
+          SOURCE_BASE64_SHA256: eb3b130765a33a16968f6a135274dc4277c22787f2bd37bacc7d19745d5b4663
+          SOURCE_GZIP_LENGTH: "3458"
+          SOURCE_GZIP_SHA256: e369d0d3c5075cff4ec862d7009cf30b00eddc48bb15d0766f96421ea4b7a7be
+          SOURCE_LENGTH: "16928"
+          SOURCE_LINES: "496"
+          SOURCE_SHA256: 7140a132f929076f22d2c4868b6a068ea21c5593b9672bc45df6cb1e2b81c495
+          SOURCE_GZIP_BASE64: |
+            H4sIAAAAAAACA+0bbW/jtvm7f4Uq7IM92EK7dcVmwEPTa7pmaO8OTlq0O9wEWqJj9mTJFaUkbnr/fc/DN5HUi5WLC6zY/CGOJfLh
+            8/5GMgzDyweSVEFJSboo8uwYpIwfSJXsAprf0aw4UB5sizK4oyXbMpoGX61fB9/++ZMgLZJ6T/OKR5PJzY7xYF+kdUaDDb1lOQ8E
+            rHtW7QISJMX+kNGKinmHepMxvgNIJYzkVXkM7kjGUlKxIo+Cq2qSADIVRRA0YPt9XZENwNXoCGwoAQSLbVDtaMDZQ0AOh7K4A5ga
+            q0VVLAAhOimLGmBFwc2OWhSVtCIsF9OpoH9T1HlKABcNYB4k5FDVJcDkRV0mdD4BXBkMPZCSw9Ni8xNNYJiiQqA/D0gOdOGSAUsB
+            CquYWhwhB3mhpgdkwmlS4GB6KCmHoQpASWt4jYhl9JYkx4AnO7onrmxoOQ9Yfle8o4EgEiBxwLrkcyCHJrh8fQCkKNkD8/NK0JMX
+            5R4Y/QvMoUgJDIYpt/iTcCAUqUZIFZDLERGGUsOnATA3oZwD4zngAmSJySAYWAj0YR7Am/uSWctGkzAMJ5NtWeyDON7WyMk4BnEe
+            irICLgEnBMF8MtHPylvBGv17R/guYxv98yde5Pr/kkrAoDMkyQjnIFH1yjwyI2jF9tR6LX7Lt8BLXEK/fA0/5YvqeGD5rX7+FctJ
+            pmghZcW2oDAxqVNWFWW0//MnsVHpWKtRzECg78yy00kAH9D++PV3X3xzdf315Zfx+vIfV9c36x/hn++vrq9evZzrQa81uC+1Lva+
+            WRcZKOZMkwPsK3mErIo1og1xqLX/hFcX6o07SSp5a9q1eOxOkRrJPdKNNfs0G6S/BVVdo2206Vmryd8bTyDHgGkU2R2N3aVShy/K
+            e/iDND6GPRptH9FXG2DAHQFhHhHDyWQSxyTLQFtXwRuxQuiwXtngF/gnnPcPuCzLouwcoNDXA/WYTc2y1CdVjYk39kjztJsvHMa9
+            RTq+vvzhs0+XUoGBmpJG6IpZRqdl+O83Hy/+Rhbbt4+fffr+D+EMxgvDCXppmYJ0air+nS0lImG4Jgy94f2O5mDWMjKoSQvjssFX
+            kZKB4wggTtyxIgNxpZHwEJOUboM4IXmRs4RksVDezRF89vQOl1sqRzsLFn8PxPOl0gxwKblwC1Fa7w9c6ptSiFrpGH7AbVXxO3rk
+            q5vSeU5B91HsfDUN5+E8CJfhrHlNc3SKMeEJY9bMWUTzBNRkGtbVdvFXwTdBAn04AJq2yPiO/Okvn01tJQXFXo5SfC3K5YBDEHFm
+            2WdigmEAWrOriVKoCTgmsh/aTFWuN7IJwE+3mMxr/Dw6v4SOoMrBEhuWseqIggiXDjpRa8C8DURGU0hAyhj+ZKkPw38/DEJoyAAI
+            T4MMCAy2OE1wD39EfSNLcq/k7y/TvOmaptQBvNcd4zAcZlvZUet1FwgICTBLK5AiqzpG+KIXX+X+MSL6CFuv3Invza+ZMo0dfUjZ
+            LeXVFM3icxOMp+CAf6G5NKOAZ0UljXHW5XI872g8zatcJ2t2+gm4bmkJNklF7oU5o0kGUUJKWMLXWIZwjMdb5AiDPGmPEobrGZZo
+            nhIr4UHiQ8EryBxYFcdTTrOtMOGXQNLScJptRRIJws95RYBq1/xwVtRBoiu4MQ5ICHTpTCvR1Q+EhwF1bjCBtJFDuk2DsD18GC93
+            wsxmSR/ZbYMJPloFU58ZQ1nZ+ZhhCiuTgBik9ozvRXzvJ9GTuqC4qVW6dPL5CGsT0yLrWuUEyiQ/upAhhKQiXcNUwKHCGYZFnjU0
+            7xexTrkNHH5GkWkOAK5IDVW1spKfKRpBjim6oBPMcMj1M+5IVNiicqC3UEsdp+fTOLlUYECraj6RFrklkBGmA7h3+BhDhayGGyo8
+            qpyZiouDbPgN7M0p2MEJbyFg8EDUBEaCEosn2p9w+PNuh/983ym6CF2mZ9Z4vu2VJjY93fBkZ+WMwUK2TTotTb47ZWZ+kjtYPLou
+            tCOctFJkjZv97DxEO6ukBZXriJDQ7kydjIMmO5VKm7vpXNGUuzEO4mdSVFxPCy9jtwx7dqhMFfYG7YxttKPpDHluCjXHFGrmzIIl
+            caKsfaNtnWWCj53TZ+f3NgqyMdysuKdlQgAaJMckpQnbQy1+/fXFAmuDHlboWhKU+ERd+bTEz80aOgA03Zlu3fKphGxK43duBhoz
+            2DDI65tOrYnJptXqc1H8/FxUFnta7YrUpNiys9wsnmR87nuPp1QGzeQx9frpml3gj0n/6YJIFUUvBEWi7Gka5BjZJLPoA2CMrUzj
+            SbUPbSqiEWXF/15F4XHjd5BpW9j+t+Ylqr0EVndSvVYnVU7zbNXtzwSaK8+hdRThq5EOdpQZ2Hi133QgM7OdrfRbhxJsuKyOxmlh
+            36ZpB/TtAjheYS0Z3ThN07jzeifYEnIcgRKRm6I7LaQ+NDEBaND0murD2BkvZc0S8Ppxa5KcPny8uqJBzd3S6MOszpMdyW8hBns1
+            wsJskciCYgT//BKnB2OvlGowbu/dnMZabVYa5CXwhSqC7hi9H4G4h1GvhpJ71Qs2KFud+iEszR6r2a4UE0egZtbsQ8pY8ztqlUEI
+            xIqzVX3I6JvenTVfjUW6+XZYmUsxcS9GixSF3C9kU7TZWgeUOknsyunEDl/rsYDfk8BFJ/vNz+jO2rtfpjX7Qm/wF2VKxZY5e2h2
+            f+w9IaOQZ+jI6s1wvhyQo0Z4HkRR9Pb/3dbz50ZOYUD5XArjbAUVVAGaCCJBD6DWann4eZzRhiFdmbU6IkZ9dUOkwe78JaSmGM9i
+            4CmVIVTlZic/VUjGB8JKDuWkYKC7tpXcCvfRQb1pg35YH1bDUR2e8T0lJdUurwZuEdsNPTlKp3JkNPeVdYYVLD53GXW+3iMDJ5iL
+            fAZWua12J1v9trbN27JB7v3CDl0d2cYCnZcuZV7MEEmCty/uEc+aUNolMqep2+XK22nwU7nZs3uiK1l90urYw1uXvz5Jfovf/Lbk
+            EDmtSVnCn5ssETlx0WfSZ6c9PQbf0G6NHe/m2iZVTZ1VZ8aq3MdnMypBmg4Kdc5+rntjgsFApmCjOaKaUOdhilq7gy/6zdlYo8kc
+            xx3jGzCdjBPw4IJD7iEOLweOLtY3V19dvLiJL7778urm1XoZtBHqdfD++blYWJNcuq8y7kLi5nL98mL9Y3yzvnh5fXVz9epl/P3V
+            9XcX31z96/JJGLUGRhUtczzCB6Em5wzHxHeM1+Lo5Ifju754cRlf/vD6m1frpyEYAR5QPIKosqIch8B7J5rIUsSIWsxEXe4SfsQq
+            uuf+zqPcMjBzVwGv920CjBHprQDxPdaCOr20t7DVbZZPzuSFt+Fjc5jnfYOuXHXI6/YVxP6xg6bAMCey+upHrJZaJwQGGiFjTj30
+            dhxau2KSrw26LK+G0W1tT0mudSJsErBx+WMve6uiIlnTrhuPsjmIbo4Iycg+AmUrZ5y0egyUx6DnwpC6Wg34wXfLVj9hTCfCrWC7
+            SFONKZlCuMf2i7zVZGs31to1nfQZHrbPjlLCIejI5AE/0TMeCNofVKz5aaDts/yWbIekRU+2R9L4bjlwWvssIpcWhL2WE2If6PV2
+            bRxkdN6L+hm2DjI6uMWBq/Qpwl6VxqvfXBd0bdlfSZrd+Wfvnm/DOn+XF/fuyWmlQ4/49VH5/oRtKEzayoqq+hwtHeO3Ru9UruVp
+            DNsj6WMC/qUdo8y/IzcFTIutBs7K17bGbeCfc6q1t/RTXZxXuOytxsgnz1ZuYUqPzcljUObOQyJW/jVa3998/FadvT99cWL6oZ1m
+            dY5+RAtcbsSTLNPabRwy3oKDNEPe2MIITHK5vRXoe1uNng90nAcbzWOazJZhPEmUg43lsV3kmdezbyv8kCeJ/JMbo7ZjB3aGuw65
+            +K3OJ3Y5nQ7niObmBzc2Z/ZdjV7NHFSc4e31Rkorv6uor7ucuoEkV9e7euD4ikocdw9+FdfsJLA/yq+sICnuMsIIc1/vV7ETA0qC
+            X6ONUCmevD+JAdVUJ2InTt8Iw9e5Ogwkro8aWx3clQJsTtw1a3juUN5w1pC6Mv/N2zId4c860DM3kfaE5VO3FJK3/IAAfcsyuihv
+            haTE3rJl8CnlSckOQkk8N/DCYph3adg+VWCiuAlSrj8PBzyjuciqb5TiQ3On1PcmM4u2iKS4US2JmoaLhZ61QAmEeJ/155pBvqy2
+            Oavjga5QFSUQPRP9kgIovhAkn2rp8DrD9sdJ5TfQIkcP1FKq86WbKRh1LVvFNaKuwvJUH87midWweuoyH95265SO6Vs9l1y3g+Yo
+            QMlQ5Hgx3T5A4l42b21AL4PXF9fXoQ1i275/tXpUKLbevPemduiBmdzXZ/FhGMUyJmJAdPU8/Omt5qrlyB8dtXNnNmn6cO/TAteY
+            4jZ89LVNJXAucl4b00bN1REXt1Beg4/l7d0YvU3DBXFZfgUqs2EphEl3omprSocSo4uR9x1WKd4YA0/gDleHdOT9eRzWB1Zcno/1
+            bXoyNFbflo+ty/TDEyQS4mr9wLAUCkblV8S1+w1J3rXGqmDyMYQFhucdcrLHK/irVRDGIkbEcaguh4ps8PrIK7q/fGDVVIWQ2eQ/
+            EO8AZiBCAAA=
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import gzip
+          import hashlib
+          import os
+          from pathlib import Path
+
+          encoded = "".join(os.environ["SOURCE_GZIP_BASE64"].split())
+          observed_encoded_sha256 = hashlib.sha256(
+              encoded.encode("ascii")
+          ).hexdigest()
+          if len(encoded) != int(os.environ["SOURCE_BASE64_LENGTH"]):
+              raise SystemExit("Dispatch payload length mismatch")
+          if observed_encoded_sha256 != os.environ["SOURCE_BASE64_SHA256"]:
+              raise SystemExit("Dispatch payload digest mismatch")
+
+          compressed = base64.b64decode(encoded, validate=True)
+          observed_compressed_sha256 = hashlib.sha256(compressed).hexdigest()
+          if len(compressed) != int(os.environ["SOURCE_GZIP_LENGTH"]):
+              raise SystemExit("Compressed dispatch length mismatch")
+          if observed_compressed_sha256 != os.environ["SOURCE_GZIP_SHA256"]:
+              raise SystemExit("Compressed dispatch digest mismatch")
+
+          source = gzip.decompress(compressed)
+          observed_source_sha256 = hashlib.sha256(source).hexdigest()
+          if len(source) != int(os.environ["SOURCE_LENGTH"]):
+              raise SystemExit("Decoded dispatch length mismatch")
+          if source.count(b"\n") != int(os.environ["SOURCE_LINES"]):
+              raise SystemExit("Decoded dispatch line-count mismatch")
+          if observed_source_sha256 != os.environ["SOURCE_SHA256"]:
+              raise SystemExit("Decoded dispatch digest mismatch")
+          if not source.endswith(b"\n") or source.endswith(b"\n\n"):
+              raise SystemExit("Decoded dispatch terminal newline mismatch")
+
+          parent = Path("parsers")
+          target = parent / "m31_published_dispatch.py"
+          if parent.is_symlink() or not parent.is_dir():
+              raise SystemExit("parsers package boundary is invalid")
+          if target.is_symlink():
+              raise SystemExit("M31 dispatch target must not be a symlink")
+          if target.exists():
+              if target.read_bytes() != source:
+                  raise SystemExit(
+                      "Refusing to replace a non-identical M31 dispatch"
+                  )
+              print("Exact M31 dispatch source was already installed")
+          else:
+              target.write_bytes(source)
+              print("Installed exact M31 dispatch source")
+
+          if target.read_bytes() != source:
+              raise SystemExit("Installed M31 dispatch verification failed")
+          print(f"dispatch_bytes={len(source)}")
+          print(f"dispatch_sha256={observed_source_sha256}")
+          PY
+
+      - name: Qualify M31 dispatch and complete Observatory
+        working-directory: observatory
+        shell: bash
+        env:
+          FRP_M31_UPSTREAM_ROOT: ../upstream
+          FRP_M30_ARCHIVE_PATH: ../upstream/artifacts/m30/packages/frp-v3.2.0-m30-archival-release.tar.gz
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          set -euo pipefail
+          export PYTHONPYCACHEPREFIX="$RUNNER_TEMP/frp-observatory-m14-pycache"
+
+          python -m compileall -q \
+            artifact_auditor \
+            parsers \
+            schemas \
+            tests \
+            trace_explorer \
+            transition_visualizer
+
+          python -m parsers.m31_published_dispatch \
+            --upstream-root "$FRP_M31_UPSTREAM_ROOT" \
+            | tee "$RUNNER_TEMP/frp-observatory-m14-dispatch.txt"
+
+          grep -Fx \
+            "FRP Observatory M31 published dispatch boundary: PASS" \
+            "$RUNNER_TEMP/frp-observatory-m14-dispatch.txt"
+          grep -Fx "published_documents=4" \
+            "$RUNNER_TEMP/frp-observatory-m14-dispatch.txt"
+          grep -Fx "dispatch_envelopes=6" \
+            "$RUNNER_TEMP/frp-observatory-m14-dispatch.txt"
+          grep -Fx "artifact_auditor_dispatches=4" \
+            "$RUNNER_TEMP/frp-observatory-m14-dispatch.txt"
+          grep -Fx "ternary_transition_visualizer_dispatches=1" \
+            "$RUNNER_TEMP/frp-observatory-m14-dispatch.txt"
+          grep -Fx "trace_explorer_dispatches=1" \
+            "$RUNNER_TEMP/frp-observatory-m14-dispatch.txt"
+          grep -Fx "legacy_schema_only_dispatch_reuse=forbidden" \
+            "$RUNNER_TEMP/frp-observatory-m14-dispatch.txt"
+          grep -Fx "mode_consumer_invocation=deferred" \
+            "$RUNNER_TEMP/frp-observatory-m14-dispatch.txt"
+          grep -Fx "source_execution=forbidden" \
+            "$RUNNER_TEMP/frp-observatory-m14-dispatch.txt"
+          grep -Fx "metric_normalization=forbidden" \
+            "$RUNNER_TEMP/frp-observatory-m14-dispatch.txt"
+          grep -Fx "semantic_reimplementation=forbidden" \
+            "$RUNNER_TEMP/frp-observatory-m14-dispatch.txt"
+          grep -Fx "source_mutation=forbidden" \
+            "$RUNNER_TEMP/frp-observatory-m14-dispatch.txt"
+          grep -Fx "downstream_writeback=forbidden" \
+            "$RUNNER_TEMP/frp-observatory-m14-dispatch.txt"
+
+          python - <<'PY'
+          from dataclasses import FrozenInstanceError, replace
+          from pathlib import Path
+
+          from artifact_auditor.m31_published_boundary_intake import (
+              M31PublishedDocumentRole,
+          )
+          from parsers.m31_published_dispatch import (
+              M31PublishedDispatchError,
+              M31PublishedDocumentDispatch,
+              build_m31_published_dispatch_batch,
+              dispatch_m31_published_documents,
+          )
+          from schemas.m31_published_registry import M31PublishedModeRoute
+          from schemas.registry import ObservatoryMode
+
+          batch = dispatch_m31_published_documents(Path("../upstream"))
+          expected = (
+              (
+                  M31PublishedDocumentRole.FORMAL_SCHEMA,
+                  ObservatoryMode.ARTIFACT_AUDITOR,
+                  "63617ee1b7861551691d98aee2399ab493954c1a120b180d86eae6d539bdbe15",
+              ),
+              (
+                  M31PublishedDocumentRole.EVIDENCE,
+                  ObservatoryMode.ARTIFACT_AUDITOR,
+                  "649502c9cb9c27572ff6691fb111c33fbf3022048865a17a2fc85f9fc3d74aa0",
+              ),
+              (
+                  M31PublishedDocumentRole.EVIDENCE,
+                  ObservatoryMode.TERNARY_TRANSITION_VISUALIZER,
+                  "ff4597411a781c814ab8ef009d30739857411d2a31ff34839d3060b478a697e8",
+              ),
+              (
+                  M31PublishedDocumentRole.EVIDENCE,
+                  ObservatoryMode.TRACE_EXPLORER,
+                  "f34b867fabcaab51515ecca39f2eb7287f52aa218d3ac48596a1481326009630",
+              ),
+              (
+                  M31PublishedDocumentRole.MANIFEST,
+                  ObservatoryMode.ARTIFACT_AUDITOR,
+                  "5d67da0bfe4506c048200b50124fa574be697affa01ccb0cc3d0e338ca2daea3",
+              ),
+              (
+                  M31PublishedDocumentRole.QUALIFICATION,
+                  ObservatoryMode.ARTIFACT_AUDITOR,
+                  "cb2843b72922803846a2bbecc541e4206b5886b818569d638968abd447562836",
+              ),
+          )
+          observed = tuple(
+              (
+                  dispatch.role,
+                  dispatch.mode,
+                  dispatch.dispatch_sha256,
+              )
+              for dispatch in batch.dispatches
+          )
+          if observed != expected:
+              raise SystemExit("M31 dispatch inventory mismatch")
+          if len(
+              batch.dispatches_for_role(
+                  M31PublishedDocumentRole.EVIDENCE
+              )
+          ) != 3:
+              raise SystemExit("M31 evidence dispatch count mismatch")
+          try:
+              batch.dispatches_for_role("evidence")
+          except M31PublishedDispatchError:
+              pass
+          else:
+              raise SystemExit("M31 string role alias was accepted")
+          try:
+              batch.dispatches_for_mode("artifact_auditor")
+          except M31PublishedDispatchError:
+              pass
+          else:
+              raise SystemExit("M31 string mode alias was accepted")
+          try:
+              batch.dispatch_for(
+                  M31PublishedDocumentRole.FORMAL_SCHEMA,
+                  ObservatoryMode.TRACE_EXPLORER,
+              )
+          except M31PublishedDispatchError:
+              pass
+          else:
+              raise SystemExit("M31 undeclared dispatch was accepted")
+          first = batch.dispatches[0]
+          reconstructed = M31PublishedModeRoute(
+              first.route.registration,
+              first.route.mode,
+          )
+          try:
+              M31PublishedDocumentDispatch.create(
+                  batch.registry_validation,
+                  first.document,
+                  reconstructed,
+              )
+          except M31PublishedDispatchError:
+              pass
+          else:
+              raise SystemExit("Reconstructed M31 route was accepted")
+          try:
+              replace(first, dispatch_sha256="0" * 64)
+          except M31PublishedDispatchError:
+              pass
+          else:
+              raise SystemExit("Forged M31 dispatch digest was accepted")
+          try:
+              first.dispatch_sha256 = "0" * 64
+          except FrozenInstanceError:
+              pass
+          else:
+              raise SystemExit("M31 dispatch is not frozen")
+          try:
+              build_m31_published_dispatch_batch(None)
+          except M31PublishedDispatchError:
+              pass
+          else:
+              raise SystemExit("Non-registry M31 batch was accepted")
+          print("M31 exact dispatch API qualification: PASS")
+          PY
+
+          python -m unittest discover \
+            -s tests \
+            -p 'test_*.py' \
+            -v 2>&1 \
+            | tee "$RUNNER_TEMP/frp-observatory-m14-tests.txt"
+
+          grep -F "Ran 489 tests" \
+            "$RUNNER_TEMP/frp-observatory-m14-tests.txt"
+          grep -Fx "OK" \
+            "$RUNNER_TEMP/frp-observatory-m14-tests.txt"
+
+          git -C ../upstream diff --exit-code
+          if [[ -n "$(git -C ../upstream status --porcelain)" ]]; then
+            echo "The read-only FRP checkout was modified."
+            git -C ../upstream status --short
+            exit 1
+          fi
+
+          python - <<'PY'
+          import subprocess
+
+          expected = "?? parsers/m31_published_dispatch.py"
+          status = subprocess.run(
+              [
+                  "git",
+                  "status",
+                  "--porcelain=v1",
+                  "--untracked-files=all",
+              ],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.splitlines()
+          if status not in ([], [expected]):
+              raise SystemExit(
+                  "Unexpected Observatory changes before publication: "
+                  f"{status!r}"
+              )
+          print("Read-only upstream and one-dispatch-file boundary: PASS")
+          PY
+
+      - name: Commit and publish only the M31 dispatch
+        working-directory: observatory
+        shell: bash
+        env:
+          SOURCE_SHA256: 7140a132f929076f22d2c4868b6a068ea21c5593b9672bc45df6cb1e2b81c495
+        run: |
+          set -euo pipefail
+          target="parsers/m31_published_dispatch.py"
+
+          python - <<'PY'
+          import hashlib
+          import os
+          import subprocess
+          from pathlib import Path
+
+          target = Path("parsers/m31_published_dispatch.py")
+          if target.is_symlink() or not target.is_file():
+              raise SystemExit("Exact M31 dispatch source is missing")
+          observed = hashlib.sha256(target.read_bytes()).hexdigest()
+          if observed != os.environ["SOURCE_SHA256"]:
+              raise SystemExit(f"M31 dispatch digest mismatch: {observed}")
+
+          expected_untracked = f"?? {target.as_posix()}"
+          status = subprocess.run(
+              [
+                  "git",
+                  "status",
+                  "--porcelain=v1",
+                  "--untracked-files=all",
+              ],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.splitlines()
+          if status not in ([], [expected_untracked]):
+              raise SystemExit(
+                  "Refusing publication with unrelated changes: "
+                  f"{status!r}"
+              )
+          PY
+
+          git add -- "$target"
+
+          staged="$(git diff --cached --name-only)"
+          if [[ -z "$staged" ]]; then
+            echo "Exact M31 dispatch is already published; no commit needed."
+            exit 0
+          fi
+          if [[ "$staged" != "$target" ]]; then
+            echo "Unexpected staged publication boundary:"
+            git diff --cached --name-only
+            exit 1
+          fi
+          if [[ -n "$(git diff --name-only)" ]]; then
+            echo "Unexpected unstaged tracked changes:"
+            git diff --name-only
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Add M31 published dispatch boundary"
+          git push origin HEAD:main
+
+      - name: Publish M14 summary
+        if: success()
+        shell: bash
+        run: |
+          {
+            echo "## FRP Observatory M14"
+            echo
+            echo "- Exact M31 published documents: 4"
+            echo "- Exact M31 dispatch envelopes: 6"
+            echo "- Artifact Auditor dispatches: 4"
+            echo "- Ternary Transition Visualizer dispatches: 1"
+            echo "- Trace Explorer dispatches: 1"
+            echo "- Legacy schema-only dispatcher reuse: forbidden"
+            echo "- Mode consumer invocation: deferred"
+            echo "- Source execution: forbidden"
+            echo "- Metric normalization: forbidden"
+            echo "- Semantic reimplementation: forbidden"
+            echo "- FRP source mutation: forbidden"
+            echo "- Downstream writeback: forbidden"
+            echo "- Published Observatory dispatch files: 1"
+          } >> "$GITHUB_STEP_SUMMARY"
