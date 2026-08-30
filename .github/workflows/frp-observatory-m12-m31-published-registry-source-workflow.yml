@@ -1,0 +1,502 @@
+name: FRP Observatory M12 M31 Published Registry Source
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: frp-observatory-m12-m31-published-registry-source-main
+  cancel-in-progress: false
+
+jobs:
+  publish-m31-registry-source:
+    name: Install and qualify exact M31 registry source
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out Observatory main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: observatory
+
+      - name: Check out FRP upstream main read-only
+        uses: actions/checkout@v4
+        with:
+          repository: maximumberlin76-gif/Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor
+          ref: main
+          path: upstream
+          persist-credentials: false
+
+      - name: Set up exact Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Require manual main-branch execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]]; then
+            echo "This workflow must be started manually."
+            exit 1
+          fi
+          if [[ "$GITHUB_REF_NAME" != "main" ]]; then
+            echo "Run this workflow manually from Branch: main."
+            exit 1
+          fi
+
+      - name: Verify exact M11 boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          requirements = {
+              Path(
+                  "observatory/.github/workflows/"
+                  "frp-observatory-m11-m31-published-boundary-"
+                  "tests-workflow.yml"
+              ): (
+                  19_818,
+                  "4dd0c8a3f7a8372e5efa4d8bfa6dd644"
+                  "a80535541679cc3bfd0d6ca1501fc75c",
+              ),
+              Path(
+                  "observatory/artifact_auditor/"
+                  "m31_published_boundary_intake.py"
+              ): (
+                  32_266,
+                  "f3cfcbc5c388065f8544b16c07bb988d"
+                  "269ec3745d141de215ff48b0e72e277c",
+              ),
+              Path(
+                  "observatory/tests/"
+                  "test_m31_published_boundary_intake.py"
+              ): (
+                  22_234,
+                  "6366338358552d27b038a0ff3f08b12e"
+                  "8bb376f1b09afa7dd0e59fc0706cf1d7",
+              ),
+          }
+          for target, (expected_bytes, expected_sha256) in requirements.items():
+              if target.is_symlink() or not target.is_file():
+                  raise SystemExit(f"Exact prerequisite is missing: {target}")
+              raw = target.read_bytes()
+              observed_sha256 = sha256(raw).hexdigest()
+              if len(raw) != expected_bytes:
+                  raise SystemExit(
+                      f"Prerequisite byte-count mismatch for {target}: "
+                      f"{len(raw)} != {expected_bytes}"
+                  )
+              if observed_sha256 != expected_sha256:
+                  raise SystemExit(
+                      f"Prerequisite digest mismatch for {target}: "
+                      f"{observed_sha256} != {expected_sha256}"
+                  )
+
+          target = Path(
+              "observatory/schemas/m31_published_registry.py"
+          )
+          expected_target_sha256 = (
+              "746a71a1fe2aaa1c367d1d6f6e2f65b0"
+              "c32908ed89626b4d2335fe866f572e3e"
+          )
+          if target.is_symlink():
+              raise SystemExit("M31 registry target must not be a symlink")
+          if target.exists():
+              if not target.is_file():
+                  raise SystemExit("M31 registry target is not a regular file")
+              observed = sha256(target.read_bytes()).hexdigest()
+              if observed != expected_target_sha256:
+                  raise SystemExit(
+                      "An unexpected M31 registry already exists: "
+                      f"{observed}"
+                  )
+              print("Exact M31 registry source is already present")
+          else:
+              print("M31 registry target is ready")
+
+          print("Exact M11 workflow prerequisite: PASS")
+          print("Exact M31 boundary source and tests: PASS")
+          PY
+
+      - name: Install integrity-bound M31 registry source
+        working-directory: observatory
+        shell: bash
+        env:
+          REGISTRY_BASE64_LENGTH: "6088"
+          REGISTRY_BASE64_SHA256: eb2310c757c83e9751a84d4ce5617e5ed8dc8ab131b0e588f39defc74abfd3cd
+          REGISTRY_GZIP_LENGTH: "4566"
+          REGISTRY_GZIP_SHA256: ab07f7ce2b721fd1e9bac6123a0911e93a5f9d70c51d942c4013fe0ac19e35b6
+          REGISTRY_SOURCE_LENGTH: "22102"
+          REGISTRY_SOURCE_LINES: "675"
+          REGISTRY_SOURCE_SHA256: 746a71a1fe2aaa1c367d1d6f6e2f65b0c32908ed89626b4d2335fe866f572e3e
+          REGISTRY_GZIP_BASE64: |
+            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
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import gzip
+          import hashlib
+          import os
+          from pathlib import Path
+
+          encoded = "".join(os.environ["REGISTRY_GZIP_BASE64"].split())
+          observed_encoded_sha256 = hashlib.sha256(
+              encoded.encode("ascii")
+          ).hexdigest()
+          if len(encoded) != int(os.environ["REGISTRY_BASE64_LENGTH"]):
+              raise SystemExit("Registry payload length mismatch")
+          if (
+              observed_encoded_sha256
+              != os.environ["REGISTRY_BASE64_SHA256"]
+          ):
+              raise SystemExit("Registry payload digest mismatch")
+
+          compressed = base64.b64decode(encoded, validate=True)
+          observed_compressed_sha256 = hashlib.sha256(compressed).hexdigest()
+          if len(compressed) != int(os.environ["REGISTRY_GZIP_LENGTH"]):
+              raise SystemExit("Compressed registry length mismatch")
+          if (
+              observed_compressed_sha256
+              != os.environ["REGISTRY_GZIP_SHA256"]
+          ):
+              raise SystemExit("Compressed registry digest mismatch")
+
+          source = gzip.decompress(compressed)
+          observed_source_sha256 = hashlib.sha256(source).hexdigest()
+          if len(source) != int(os.environ["REGISTRY_SOURCE_LENGTH"]):
+              raise SystemExit("Decoded registry length mismatch")
+          if source.count(b"\n") != int(
+              os.environ["REGISTRY_SOURCE_LINES"]
+          ):
+              raise SystemExit("Decoded registry line-count mismatch")
+          if (
+              observed_source_sha256
+              != os.environ["REGISTRY_SOURCE_SHA256"]
+          ):
+              raise SystemExit("Decoded registry digest mismatch")
+          if not source.endswith(b"\n") or source.endswith(b"\n\n"):
+              raise SystemExit("Decoded registry terminal newline mismatch")
+
+          parent = Path("schemas")
+          target = parent / "m31_published_registry.py"
+          if parent.is_symlink() or not parent.is_dir():
+              raise SystemExit("schemas package boundary is invalid")
+          if target.is_symlink():
+              raise SystemExit("M31 registry target must not be a symlink")
+          if target.exists():
+              if target.read_bytes() != source:
+                  raise SystemExit(
+                      "Refusing to replace a non-identical M31 registry"
+                  )
+              print("Exact M31 registry source was already installed")
+          else:
+              target.write_bytes(source)
+              print("Installed exact M31 registry source")
+
+          if target.read_bytes() != source:
+              raise SystemExit("Installed M31 registry verification failed")
+          print(f"registry_bytes={len(source)}")
+          print(f"registry_sha256={observed_source_sha256}")
+          PY
+
+      - name: Qualify M31 registry and complete Observatory
+        working-directory: observatory
+        shell: bash
+        env:
+          FRP_M31_UPSTREAM_ROOT: ../upstream
+          FRP_M30_ARCHIVE_PATH: ../upstream/artifacts/m30/packages/frp-v3.2.0-m30-archival-release.tar.gz
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          set -euo pipefail
+          export PYTHONPYCACHEPREFIX="$RUNNER_TEMP/frp-observatory-m12-pycache"
+
+          python -m compileall -q \
+            artifact_auditor \
+            parsers \
+            schemas \
+            tests \
+            trace_explorer \
+            transition_visualizer
+
+          python -m schemas.m31_published_registry \
+            --upstream-root "$FRP_M31_UPSTREAM_ROOT" \
+            | tee "$RUNNER_TEMP/frp-observatory-m12-registry.txt"
+
+          grep -Fx \
+            "FRP Observatory M31 published document registry: PASS" \
+            "$RUNNER_TEMP/frp-observatory-m12-registry.txt"
+          grep -Fx "published_documents=4" \
+            "$RUNNER_TEMP/frp-observatory-m12-registry.txt"
+          grep -Fx "mode_routes=6" \
+            "$RUNNER_TEMP/frp-observatory-m12-registry.txt"
+          grep -Fx "artifact_auditor_routes=4" \
+            "$RUNNER_TEMP/frp-observatory-m12-registry.txt"
+          grep -Fx "ternary_transition_visualizer_routes=1" \
+            "$RUNNER_TEMP/frp-observatory-m12-registry.txt"
+          grep -Fx "trace_explorer_routes=1" \
+            "$RUNNER_TEMP/frp-observatory-m12-registry.txt"
+          grep -Fx "schema_aliases=forbidden" \
+            "$RUNNER_TEMP/frp-observatory-m12-registry.txt"
+          grep -Fx "metric_normalization=forbidden" \
+            "$RUNNER_TEMP/frp-observatory-m12-registry.txt"
+          grep -Fx "source_mutation=forbidden" \
+            "$RUNNER_TEMP/frp-observatory-m12-registry.txt"
+          grep -Fx "downstream_writeback=forbidden" \
+            "$RUNNER_TEMP/frp-observatory-m12-registry.txt"
+
+          python - <<'PY'
+          from dataclasses import FrozenInstanceError, replace
+          from pathlib import Path
+
+          from artifact_auditor.m31_published_boundary_intake import (
+              M31PublishedDocumentRole,
+          )
+          from schemas.m31_published_registry import (
+              M31_PUBLISHED_DOCUMENT_REGISTRATIONS,
+              M31PublishedRegistryError,
+              registration_for_m31_role,
+              validate_m31_published_registry,
+          )
+          from schemas.registry import ObservatoryMode
+
+          result = validate_m31_published_registry(Path("../upstream"))
+          if len(result.registrations) != 4 or len(result.routes) != 6:
+              raise SystemExit("M31 registry inventory mismatch")
+          if tuple(
+              registration.role
+              for registration in result.registrations
+          ) != tuple(M31PublishedDocumentRole):
+              raise SystemExit("M31 registry role order mismatch")
+          if len(
+              result.routes_for_mode(ObservatoryMode.ARTIFACT_AUDITOR)
+          ) != 4:
+              raise SystemExit("M31 auditor route count mismatch")
+          if len(
+              result.routes_for_mode(
+                  ObservatoryMode.TERNARY_TRANSITION_VISUALIZER
+              )
+          ) != 1:
+              raise SystemExit("M31 visualizer route count mismatch")
+          if len(
+              result.routes_for_mode(ObservatoryMode.TRACE_EXPLORER)
+          ) != 1:
+              raise SystemExit("M31 explorer route count mismatch")
+          try:
+              registration_for_m31_role("evidence")
+          except M31PublishedRegistryError:
+              pass
+          else:
+              raise SystemExit("M31 string role alias was accepted")
+          try:
+              replace(
+                  M31_PUBLISHED_DOCUMENT_REGISTRATIONS[1],
+                  observatory_modes=(
+                      ObservatoryMode.ARTIFACT_AUDITOR,
+                  ),
+              )
+          except M31PublishedRegistryError:
+              pass
+          else:
+              raise SystemExit("M31 route narrowing was accepted")
+          try:
+              result.registry_revision = "tampered"
+          except FrozenInstanceError:
+              pass
+          else:
+              raise SystemExit("M31 registry result is not frozen")
+          print("M31 exact registry API qualification: PASS")
+          PY
+
+          python -m unittest discover \
+            -s tests \
+            -p 'test_*.py' \
+            -v 2>&1 \
+            | tee "$RUNNER_TEMP/frp-observatory-m12-tests.txt"
+
+          grep -F "Ran 468 tests" \
+            "$RUNNER_TEMP/frp-observatory-m12-tests.txt"
+          grep -Fx "OK" \
+            "$RUNNER_TEMP/frp-observatory-m12-tests.txt"
+
+          git -C ../upstream diff --exit-code
+          if [[ -n "$(git -C ../upstream status --porcelain)" ]]; then
+            echo "The read-only FRP checkout was modified."
+            git -C ../upstream status --short
+            exit 1
+          fi
+
+          python - <<'PY'
+          import subprocess
+
+          expected = "?? schemas/m31_published_registry.py"
+          status = subprocess.run(
+              [
+                  "git",
+                  "status",
+                  "--porcelain=v1",
+                  "--untracked-files=all",
+              ],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.splitlines()
+          if status not in ([], [expected]):
+              raise SystemExit(
+                  "Unexpected Observatory changes before publication: "
+                  f"{status!r}"
+              )
+          print("Read-only upstream and one-registry-file boundary: PASS")
+          PY
+
+      - name: Commit and publish only the M31 registry
+        working-directory: observatory
+        shell: bash
+        env:
+          REGISTRY_SOURCE_SHA256: 746a71a1fe2aaa1c367d1d6f6e2f65b0c32908ed89626b4d2335fe866f572e3e
+        run: |
+          set -euo pipefail
+          target="schemas/m31_published_registry.py"
+
+          python - <<'PY'
+          import hashlib
+          import os
+          import subprocess
+          from pathlib import Path
+
+          target = Path("schemas/m31_published_registry.py")
+          if target.is_symlink() or not target.is_file():
+              raise SystemExit("Exact M31 registry source is missing")
+          observed = hashlib.sha256(target.read_bytes()).hexdigest()
+          if observed != os.environ["REGISTRY_SOURCE_SHA256"]:
+              raise SystemExit(f"M31 registry digest mismatch: {observed}")
+
+          expected_untracked = f"?? {target.as_posix()}"
+          status = subprocess.run(
+              [
+                  "git",
+                  "status",
+                  "--porcelain=v1",
+                  "--untracked-files=all",
+              ],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.splitlines()
+          if status not in ([], [expected_untracked]):
+              raise SystemExit(
+                  "Refusing publication with unrelated changes: "
+                  f"{status!r}"
+              )
+          PY
+
+          git add -- "$target"
+
+          staged="$(git diff --cached --name-only)"
+          if [[ -z "$staged" ]]; then
+            echo "Exact M31 registry is already published; no commit needed."
+            exit 0
+          fi
+          if [[ "$staged" != "$target" ]]; then
+            echo "Unexpected staged publication boundary:"
+            git diff --cached --name-only
+            exit 1
+          fi
+          if [[ -n "$(git diff --name-only)" ]]; then
+            echo "Unexpected unstaged tracked changes:"
+            git diff --name-only
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Add M31 published document registry"
+          git push origin HEAD:main
+
+      - name: Publish M12 summary
+        if: success()
+        shell: bash
+        run: |
+          {
+            echo "## FRP Observatory M12"
+            echo
+            echo "- Exact M31 document registrations: 4"
+            echo "- Exact Observatory mode routes: 6"
+            echo "- Artifact Auditor routes: 4"
+            echo "- Ternary Transition Visualizer routes: 1"
+            echo "- Trace Explorer routes: 1"
+            echo "- Schema aliases: forbidden"
+            echo "- Metric normalization: forbidden"
+            echo "- Source execution: forbidden"
+            echo "- FRP source mutation: forbidden"
+            echo "- Downstream writeback: forbidden"
+            echo "- Published Observatory registry files: 1"
+          } >> "$GITHUB_STEP_SUMMARY"
