@@ -1,0 +1,546 @@
+name: FRP Observatory M10 M31 Published Boundary Source
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: frp-observatory-m10-m31-published-boundary-source-main
+  cancel-in-progress: false
+
+jobs:
+  publish-m31-boundary-source:
+    name: Install and qualify exact read-only M31 intake
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out Observatory main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: observatory
+
+      - name: Check out FRP upstream main read-only
+        uses: actions/checkout@v4
+        with:
+          repository: maximumberlin76-gif/Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor
+          ref: main
+          path: upstream
+          persist-credentials: false
+
+      - name: Set up exact Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Require manual main-branch execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]]; then
+            echo "This workflow must be started manually."
+            exit 1
+          fi
+          if [[ "$GITHUB_REF_NAME" != "main" ]]; then
+            echo "Run this workflow manually from Branch: main."
+            exit 1
+          fi
+
+      - name: Verify exact M9 and upstream prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          requirements = {
+              Path(
+                  "observatory/.github/workflows/"
+                  "frp-observatory-m9-m31-published-boundary-intake-workflow.yml"
+              ): (
+                  19_633,
+                  "d7521520abb07f5d8a4f44c09f91d00f"
+                  "a9c07b3a22356041116bbcd7f291672b",
+              ),
+              Path(
+                  "upstream/schemas/m31/"
+                  "frp.m31.phase_interference_active_zero_thermal_evidence."
+                  "v1.schema.json"
+              ): (
+                  1_468,
+                  "53d79d45d70753ccd24c3dc4c97af6f"
+                  "ee481f86a9d7cdca7ef78b486c76479f7",
+              ),
+              Path(
+                  "upstream/artifacts/m31/evidence/"
+                  "m31-phase-interference-active-zero-thermal-evidence.json"
+              ): (
+                  39_993,
+                  "bdaa676acbfb09d86d848070e8a2673c"
+                  "5ce6902657a0b13b2e4293383bec8b42",
+              ),
+              Path(
+                  "upstream/artifacts/m31/manifests/"
+                  "m31-phase-interference-active-zero-thermal-evidence-"
+                  "manifest.json"
+              ): (
+                  828,
+                  "80f0841d0041cd22c2f76175b6139e60"
+                  "1aede7b69823356ae1fefbce5f793e7c",
+              ),
+              Path(
+                  "upstream/artifacts/m31/qualification/"
+                  "m31-phase-interference-active-zero-thermal-evidence-"
+                  "qualification.json"
+              ): (
+                  1_512,
+                  "4c2446f954e01ec0aa37cc6c0fc70cf4"
+                  "a87ec565c450628e31b0efcac9160224",
+              ),
+              Path(
+                  "upstream/artifacts/m30/packages/"
+                  "frp-v3.2.0-m30-archival-release.tar.gz"
+              ): (
+                  10_189_989,
+                  "05ea33f6f3f505d315af930c2d51779f"
+                  "7189905308473f32a57375e477069caa",
+              ),
+          }
+          for target, (expected_bytes, expected_sha256) in requirements.items():
+              if target.is_symlink() or not target.is_file():
+                  raise SystemExit(f"Exact prerequisite is missing: {target}")
+              raw = target.read_bytes()
+              observed_sha256 = sha256(raw).hexdigest()
+              if len(raw) != expected_bytes:
+                  raise SystemExit(
+                      f"Prerequisite byte-count mismatch for {target}: "
+                      f"{len(raw)} != {expected_bytes}"
+                  )
+              if observed_sha256 != expected_sha256:
+                  raise SystemExit(
+                      f"Prerequisite digest mismatch for {target}: "
+                      f"{observed_sha256} != {expected_sha256}"
+                  )
+
+          target = Path(
+              "observatory/artifact_auditor/"
+              "m31_published_boundary_intake.py"
+          )
+          expected_target_sha256 = (
+              "f3cfcbc5c388065f8544b16c07bb988d"
+              "269ec3745d141de215ff48b0e72e277c"
+          )
+          if target.is_symlink():
+              raise SystemExit("M31 intake source target must not be a symlink")
+          if target.exists():
+              if not target.is_file():
+                  raise SystemExit("M31 intake source target is not a regular file")
+              observed = sha256(target.read_bytes()).hexdigest()
+              if observed != expected_target_sha256:
+                  raise SystemExit(
+                      "An unexpected M31 intake source already exists: "
+                      f"{observed}"
+                  )
+              print("Exact M31 intake source is already present")
+          else:
+              print("M31 intake source target is ready")
+
+          print("Exact M9 prerequisite: PASS")
+          print("Exact FRP M31 publication boundary: PASS")
+          print("Exact FRP M30 archival boundary: PASS")
+          PY
+
+      - name: Install integrity-bound M31 intake source
+        working-directory: observatory
+        shell: bash
+        env:
+          MODULE_BASE64_LENGTH: "9904"
+          MODULE_BASE64_SHA256: 8e51465f1546c7b9389f162e700f982357a42dba0fd444dae8805d2b103c1683
+          MODULE_GZIP_LENGTH: "7426"
+          MODULE_GZIP_SHA256: 2cf30430d61c022d1738fbe70636035dfd33d576d8f6386b06d19fbfe75acbad
+          MODULE_SOURCE_LENGTH: "32266"
+          MODULE_SOURCE_LINES: "940"
+          MODULE_SOURCE_SHA256: f3cfcbc5c388065f8544b16c07bb988d269ec3745d141de215ff48b0e72e277c
+          MODULE_GZIP_BASE64: |
+            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
+            AA==
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import gzip
+          import hashlib
+          import os
+          from pathlib import Path
+
+          encoded = "".join(os.environ["MODULE_GZIP_BASE64"].split())
+          expected_encoded_length = int(os.environ["MODULE_BASE64_LENGTH"])
+          observed_encoded_sha256 = hashlib.sha256(
+              encoded.encode("ascii")
+          ).hexdigest()
+          if len(encoded) != expected_encoded_length:
+              raise SystemExit(
+                  "Module payload length mismatch: "
+                  f"{len(encoded)} != {expected_encoded_length}"
+              )
+          if observed_encoded_sha256 != os.environ["MODULE_BASE64_SHA256"]:
+              raise SystemExit(
+                  "Module payload digest mismatch: "
+                  f"{observed_encoded_sha256} != "
+                  f'{os.environ["MODULE_BASE64_SHA256"]}'
+              )
+
+          compressed = base64.b64decode(encoded, validate=True)
+          observed_compressed_sha256 = hashlib.sha256(compressed).hexdigest()
+          if len(compressed) != int(os.environ["MODULE_GZIP_LENGTH"]):
+              raise SystemExit("Compressed module length mismatch")
+          if observed_compressed_sha256 != os.environ["MODULE_GZIP_SHA256"]:
+              raise SystemExit("Compressed module digest mismatch")
+
+          source = gzip.decompress(compressed)
+          observed_source_sha256 = hashlib.sha256(source).hexdigest()
+          if len(source) != int(os.environ["MODULE_SOURCE_LENGTH"]):
+              raise SystemExit("Decoded module length mismatch")
+          if source.count(b"\n") != int(os.environ["MODULE_SOURCE_LINES"]):
+              raise SystemExit("Decoded module line-count mismatch")
+          if observed_source_sha256 != os.environ["MODULE_SOURCE_SHA256"]:
+              raise SystemExit("Decoded module digest mismatch")
+          if not source.endswith(b"\n") or source.endswith(b"\n\n"):
+              raise SystemExit("Decoded module terminal newline mismatch")
+
+          parent = Path("artifact_auditor")
+          target = parent / "m31_published_boundary_intake.py"
+          if parent.is_symlink() or not parent.is_dir():
+              raise SystemExit("artifact_auditor package boundary is invalid")
+          if target.is_symlink():
+              raise SystemExit("M31 intake source target must not be a symlink")
+          if target.exists():
+              if target.read_bytes() != source:
+                  raise SystemExit(
+                      "Refusing to replace a non-identical M31 intake source"
+                  )
+              print("Exact M31 intake source was already installed")
+          else:
+              target.write_bytes(source)
+              print("Installed exact M31 intake source")
+
+          installed = target.read_bytes()
+          if installed != source:
+              raise SystemExit("Installed M31 intake source verification failed")
+          print(f"module_bytes={len(installed)}")
+          print(f"module_sha256={observed_source_sha256}")
+          PY
+
+      - name: Qualify complete read-only M31 source
+        working-directory: observatory
+        shell: bash
+        env:
+          UPSTREAM_ROOT: ../upstream
+          FRP_M30_ARCHIVE_PATH: ../upstream/artifacts/m30/packages/frp-v3.2.0-m30-archival-release.tar.gz
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          set -euo pipefail
+          export PYTHONPYCACHEPREFIX="$RUNNER_TEMP/frp-observatory-m10-pycache"
+
+          python -m compileall -q \
+            artifact_auditor \
+            parsers \
+            trace_explorer \
+            transition_visualizer
+
+          python -m artifact_auditor.m31_published_boundary_intake \
+            --upstream-root "$UPSTREAM_ROOT" \
+            | tee "$RUNNER_TEMP/frp-observatory-m10-intake.txt"
+
+          grep -Fx \
+            "FRP Observatory M31 published boundary intake: PASS" \
+            "$RUNNER_TEMP/frp-observatory-m10-intake.txt"
+          grep -Fx "published_documents=4" \
+            "$RUNNER_TEMP/frp-observatory-m10-intake.txt"
+          grep -Fx "published_document_bytes=43801" \
+            "$RUNNER_TEMP/frp-observatory-m10-intake.txt"
+          grep -Fx "provenance_sources=12" \
+            "$RUNNER_TEMP/frp-observatory-m10-intake.txt"
+          grep -Fx "m30_archive_members=10" \
+            "$RUNNER_TEMP/frp-observatory-m10-intake.txt"
+          grep -Fx "balanced_ternary_notation=-1/0/1" \
+            "$RUNNER_TEMP/frp-observatory-m10-intake.txt"
+          grep -Fx "source_mutation=forbidden" \
+            "$RUNNER_TEMP/frp-observatory-m10-intake.txt"
+          grep -Fx "downstream_writeback=forbidden" \
+            "$RUNNER_TEMP/frp-observatory-m10-intake.txt"
+
+          python - <<'PY'
+          from dataclasses import FrozenInstanceError
+          from pathlib import Path
+
+          from artifact_auditor.m31_published_boundary_intake import (
+              M31_PUBLISHED_DOCUMENT_IDENTITIES,
+              M31_PUBLISHED_REGISTRY_REVISION,
+              M31PublishedDocumentRole,
+              validate_m31_published_boundary,
+          )
+
+          result = validate_m31_published_boundary(Path("../upstream"))
+          if result.registry_revision != M31_PUBLISHED_REGISTRY_REVISION:
+              raise SystemExit("M31 registry revision mismatch")
+          if result.documents != tuple(
+              result.document(identity.role)
+              for identity in M31_PUBLISHED_DOCUMENT_IDENTITIES
+          ):
+              raise SystemExit("M31 document order or lookup mismatch")
+          if tuple(document.identity.role for document in result.documents) != (
+              M31PublishedDocumentRole.FORMAL_SCHEMA,
+              M31PublishedDocumentRole.EVIDENCE,
+              M31PublishedDocumentRole.MANIFEST,
+              M31PublishedDocumentRole.QUALIFICATION,
+          ):
+              raise SystemExit("M31 document role inventory mismatch")
+          if result.total_document_bytes != 43_801:
+              raise SystemExit("M31 total published bytes mismatch")
+          if len(result.provenance_sources) != 12:
+              raise SystemExit("M31 provenance source inventory mismatch")
+          if result.m30_archive_member_count != 10:
+              raise SystemExit("M30 archive member inventory mismatch")
+          if result.loaded_at.tzinfo is None:
+              raise SystemExit("M31 intake timestamp must be timezone-aware")
+          try:
+              result.registry_revision = "tampered"
+          except FrozenInstanceError:
+              pass
+          else:
+              raise SystemExit("M31 validation result is not frozen")
+          print("M31 immutable API qualification: PASS")
+          PY
+
+          python -m unittest discover \
+            -s tests \
+            -p 'test_*.py' \
+            -v 2>&1 \
+            | tee "$RUNNER_TEMP/frp-observatory-m10-tests.txt"
+
+          grep -F "Ran 447 tests" \
+            "$RUNNER_TEMP/frp-observatory-m10-tests.txt"
+          grep -Fx "OK" \
+            "$RUNNER_TEMP/frp-observatory-m10-tests.txt"
+
+          git -C ../upstream diff --exit-code
+          if [[ -n "$(git -C ../upstream status --porcelain)" ]]; then
+            echo "The read-only FRP checkout was modified."
+            git -C ../upstream status --short
+            exit 1
+          fi
+
+          python - <<'PY'
+          import subprocess
+
+          expected = (
+              "?? artifact_auditor/"
+              "m31_published_boundary_intake.py"
+          )
+          status = subprocess.run(
+              [
+                  "git",
+                  "status",
+                  "--porcelain=v1",
+                  "--untracked-files=all",
+              ],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.splitlines()
+          if status not in ([], [expected]):
+              raise SystemExit(
+                  "Unexpected Observatory changes before publication: "
+                  f"{status!r}"
+              )
+          print("Read-only upstream and one-file publication boundary: PASS")
+          PY
+
+      - name: Commit and publish only the M31 intake source
+        working-directory: observatory
+        shell: bash
+        env:
+          MODULE_SOURCE_SHA256: f3cfcbc5c388065f8544b16c07bb988d269ec3745d141de215ff48b0e72e277c
+        run: |
+          set -euo pipefail
+          target="artifact_auditor/m31_published_boundary_intake.py"
+
+          python - <<'PY'
+          import hashlib
+          import os
+          import subprocess
+          from pathlib import Path
+
+          target = Path(
+              "artifact_auditor/m31_published_boundary_intake.py"
+          )
+          if target.is_symlink() or not target.is_file():
+              raise SystemExit("Exact M31 intake source is missing")
+          observed = hashlib.sha256(target.read_bytes()).hexdigest()
+          if observed != os.environ["MODULE_SOURCE_SHA256"]:
+              raise SystemExit(
+                  f"M31 intake source digest mismatch: {observed}"
+              )
+
+          expected_untracked = f"?? {target.as_posix()}"
+          status = subprocess.run(
+              [
+                  "git",
+                  "status",
+                  "--porcelain=v1",
+                  "--untracked-files=all",
+              ],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.splitlines()
+          if status not in ([], [expected_untracked]):
+              raise SystemExit(
+                  "Refusing publication with unrelated changes: "
+                  f"{status!r}"
+              )
+          PY
+
+          git add -- "$target"
+
+          staged="$(git diff --cached --name-only)"
+          if [[ -z "$staged" ]]; then
+            echo "Exact M31 intake source is already published; no commit needed."
+            exit 0
+          fi
+          if [[ "$staged" != "$target" ]]; then
+            echo "Unexpected staged publication boundary:"
+            git diff --cached --name-only
+            exit 1
+          fi
+          if [[ -n "$(git diff --name-only)" ]]; then
+            echo "Unexpected unstaged tracked changes:"
+            git diff --name-only
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Add M31 published boundary intake source"
+          git push origin HEAD:main
+
+      - name: Publish M10 summary
+        if: success()
+        shell: bash
+        run: |
+          {
+            echo "## FRP Observatory M10"
+            echo
+            echo "- Exact M31 published boundary source: PASS"
+            echo "- Published M31 documents: 4"
+            echo "- Current provenance sources: 12"
+            echo "- M30 archive provenance members: 10"
+            echo '- Balanced ternary notation: `-1/0/1`'
+            echo "- Observatory regression: 447 tests PASS"
+            echo "- FRP source mutation: forbidden"
+            echo "- Downstream writeback: forbidden"
+            echo "- Published Observatory source files: 1"
+          } >> "$GITHUB_STEP_SUMMARY"
