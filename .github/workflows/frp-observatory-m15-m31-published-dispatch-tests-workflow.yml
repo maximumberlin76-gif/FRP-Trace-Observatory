@@ -1,0 +1,459 @@
+name: FRP Observatory M15 M31 Published Dispatch Tests
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: frp-observatory-m15-m31-published-dispatch-tests-main
+  cancel-in-progress: false
+
+jobs:
+  publish-m31-dispatch-tests:
+    name: Install and qualify exact M31 dispatch tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out Observatory main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: observatory
+
+      - name: Check out FRP upstream main read-only
+        uses: actions/checkout@v4
+        with:
+          repository: maximumberlin76-gif/Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor
+          ref: main
+          path: upstream
+          persist-credentials: false
+
+      - name: Set up exact Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Require manual main-branch execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]]; then
+            echo "This workflow must be started manually."
+            exit 1
+          fi
+          if [[ "$GITHUB_REF_NAME" != "main" ]]; then
+            echo "Run this workflow manually from Branch: main."
+            exit 1
+          fi
+
+      - name: Verify exact M14 dispatch boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          requirements = {
+              Path(
+                  "observatory/artifact_auditor/"
+                  "m31_published_boundary_intake.py"
+              ): (
+                  32_266,
+                  "f3cfcbc5c388065f8544b16c07bb988d"
+                  "269ec3745d141de215ff48b0e72e277c",
+              ),
+              Path(
+                  "observatory/tests/"
+                  "test_m31_published_boundary_intake.py"
+              ): (
+                  22_234,
+                  "6366338358552d27b038a0ff3f08b12e"
+                  "8bb376f1b09afa7dd0e59fc0706cf1d7",
+              ),
+              Path(
+                  "observatory/schemas/"
+                  "m31_published_registry.py"
+              ): (
+                  22_102,
+                  "746a71a1fe2aaa1c367d1d6f6e2f65b0"
+                  "c32908ed89626b4d2335fe866f572e3e",
+              ),
+              Path(
+                  "observatory/tests/"
+                  "test_m31_published_registry.py"
+              ): (
+                  24_161,
+                  "cd8e89b4682a794dd6543ba779f5758e7"
+                  "6e4b344cbbc7c61341bd6caa2694970",
+              ),
+              Path(
+                  "observatory/parsers/"
+                  "m31_published_dispatch.py"
+              ): (
+                  16_928,
+                  "7140a132f929076f22d2c4868b6a068e"
+                  "a21c5593b9672bc45df6cb1e2b81c495",
+              ),
+          }
+          for target, (expected_bytes, expected_sha256) in requirements.items():
+              if target.is_symlink() or not target.is_file():
+                  raise SystemExit(f"Exact prerequisite is missing: {target}")
+              raw = target.read_bytes()
+              observed_sha256 = sha256(raw).hexdigest()
+              if len(raw) != expected_bytes:
+                  raise SystemExit(
+                      f"Prerequisite byte-count mismatch for {target}: "
+                      f"{len(raw)} != {expected_bytes}"
+                  )
+              if observed_sha256 != expected_sha256:
+                  raise SystemExit(
+                      f"Prerequisite digest mismatch for {target}: "
+                      f"{observed_sha256} != {expected_sha256}"
+                  )
+
+          target = Path(
+              "observatory/tests/test_m31_published_dispatch.py"
+          )
+          expected_target_sha256 = (
+              "cf1689a9a930f6bd9a202f85318b5e5c"
+              "cb8df3b262fb314b9de063e80769d3bb"
+          )
+          if target.is_symlink():
+              raise SystemExit("M31 dispatch test target must not be a symlink")
+          if target.exists():
+              if not target.is_file():
+                  raise SystemExit(
+                      "M31 dispatch test target is not a regular file"
+                  )
+              observed = sha256(target.read_bytes()).hexdigest()
+              if observed != expected_target_sha256:
+                  raise SystemExit(
+                      "Unexpected M31 dispatch tests already exist: "
+                      f"{observed}"
+                  )
+              print("Exact M31 dispatch tests are already present")
+          else:
+              print("M31 dispatch test target is ready")
+
+          print("Exact M14 dispatch source prerequisite: PASS")
+          print("Exact M31 boundary and registry prerequisites: PASS")
+          PY
+
+      - name: Install integrity-bound M31 dispatch tests
+        working-directory: observatory
+        shell: bash
+        env:
+          TEST_BASE64_LENGTH: "5948"
+          TEST_BASE64_SHA256: ec86c06746b7ee68cef3c99c1c6f4480efc7e4a1af617d4b19764496ad2df15e
+          TEST_GZIP_LENGTH: "4460"
+          TEST_GZIP_SHA256: bcee6920bf646702c78e99a4cf4bd54f47e1add7810dc3da59b4f9b6dbfd497c
+          TEST_SOURCE_LENGTH: "23063"
+          TEST_SOURCE_LINES: "661"
+          TEST_SOURCE_SHA256: cf1689a9a930f6bd9a202f85318b5e5ccb8df3b262fb314b9de063e80769d3bb
+          TEST_GZIP_BASE64: |
+            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
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import gzip
+          import hashlib
+          import os
+          from pathlib import Path
+
+          encoded = "".join(os.environ["TEST_GZIP_BASE64"].split())
+          observed_encoded_sha256 = hashlib.sha256(
+              encoded.encode("ascii")
+          ).hexdigest()
+          if len(encoded) != int(os.environ["TEST_BASE64_LENGTH"]):
+              raise SystemExit("Dispatch test payload length mismatch")
+          if observed_encoded_sha256 != os.environ["TEST_BASE64_SHA256"]:
+              raise SystemExit("Dispatch test payload digest mismatch")
+
+          compressed = base64.b64decode(encoded, validate=True)
+          observed_compressed_sha256 = hashlib.sha256(compressed).hexdigest()
+          if len(compressed) != int(os.environ["TEST_GZIP_LENGTH"]):
+              raise SystemExit("Compressed dispatch test length mismatch")
+          if observed_compressed_sha256 != os.environ["TEST_GZIP_SHA256"]:
+              raise SystemExit("Compressed dispatch test digest mismatch")
+
+          source = gzip.decompress(compressed)
+          observed_source_sha256 = hashlib.sha256(source).hexdigest()
+          if len(source) != int(os.environ["TEST_SOURCE_LENGTH"]):
+              raise SystemExit("Decoded dispatch test length mismatch")
+          if source.count(b"\n") != int(os.environ["TEST_SOURCE_LINES"]):
+              raise SystemExit("Decoded dispatch test line-count mismatch")
+          if observed_source_sha256 != os.environ["TEST_SOURCE_SHA256"]:
+              raise SystemExit("Decoded dispatch test digest mismatch")
+          if not source.endswith(b"\n") or source.endswith(b"\n\n"):
+              raise SystemExit("Decoded dispatch test newline mismatch")
+
+          parent = Path("tests")
+          target = parent / "test_m31_published_dispatch.py"
+          if parent.is_symlink() or not parent.is_dir():
+              raise SystemExit("tests package boundary is invalid")
+          if target.is_symlink():
+              raise SystemExit("M31 dispatch test target must not be a symlink")
+          if target.exists():
+              if target.read_bytes() != source:
+                  raise SystemExit(
+                      "Refusing to replace non-identical M31 dispatch tests"
+                  )
+              print("Exact M31 dispatch tests were already installed")
+          else:
+              target.write_bytes(source)
+              print("Installed exact M31 dispatch tests")
+
+          if target.read_bytes() != source:
+              raise SystemExit("Installed M31 dispatch test verification failed")
+          print(f"dispatch_test_bytes={len(source)}")
+          print(f"dispatch_test_sha256={observed_source_sha256}")
+          PY
+
+      - name: Qualify M31 dispatch tests and complete Observatory
+        working-directory: observatory
+        shell: bash
+        env:
+          FRP_M31_UPSTREAM_ROOT: ../upstream
+          FRP_M30_ARCHIVE_PATH: ../upstream/artifacts/m30/packages/frp-v3.2.0-m30-archival-release.tar.gz
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          set -euo pipefail
+          export PYTHONPYCACHEPREFIX="$RUNNER_TEMP/frp-observatory-m15-pycache"
+
+          python -m compileall -q \
+            artifact_auditor \
+            parsers \
+            schemas \
+            tests \
+            trace_explorer \
+            transition_visualizer
+
+          python -m parsers.m31_published_dispatch \
+            --upstream-root "$FRP_M31_UPSTREAM_ROOT" \
+            | tee "$RUNNER_TEMP/frp-observatory-m15-dispatch.txt"
+
+          grep -Fx \
+            "FRP Observatory M31 published dispatch boundary: PASS" \
+            "$RUNNER_TEMP/frp-observatory-m15-dispatch.txt"
+          grep -Fx "published_documents=4" \
+            "$RUNNER_TEMP/frp-observatory-m15-dispatch.txt"
+          grep -Fx "dispatch_envelopes=6" \
+            "$RUNNER_TEMP/frp-observatory-m15-dispatch.txt"
+          grep -Fx "artifact_auditor_dispatches=4" \
+            "$RUNNER_TEMP/frp-observatory-m15-dispatch.txt"
+          grep -Fx "ternary_transition_visualizer_dispatches=1" \
+            "$RUNNER_TEMP/frp-observatory-m15-dispatch.txt"
+          grep -Fx "trace_explorer_dispatches=1" \
+            "$RUNNER_TEMP/frp-observatory-m15-dispatch.txt"
+          grep -Fx "legacy_schema_only_dispatch_reuse=forbidden" \
+            "$RUNNER_TEMP/frp-observatory-m15-dispatch.txt"
+          grep -Fx "mode_consumer_invocation=deferred" \
+            "$RUNNER_TEMP/frp-observatory-m15-dispatch.txt"
+          grep -Fx "source_mutation=forbidden" \
+            "$RUNNER_TEMP/frp-observatory-m15-dispatch.txt"
+          grep -Fx "downstream_writeback=forbidden" \
+            "$RUNNER_TEMP/frp-observatory-m15-dispatch.txt"
+
+          python -m unittest discover \
+            -s tests \
+            -p 'test_m31_published_dispatch.py' \
+            -v 2>&1 \
+            | tee "$RUNNER_TEMP/frp-observatory-m15-dedicated-tests.txt"
+
+          grep -F "Ran 25 tests" \
+            "$RUNNER_TEMP/frp-observatory-m15-dedicated-tests.txt"
+          grep -Fx "OK" \
+            "$RUNNER_TEMP/frp-observatory-m15-dedicated-tests.txt"
+
+          python -m unittest discover \
+            -s tests \
+            -p 'test_*.py' \
+            -v 2>&1 \
+            | tee "$RUNNER_TEMP/frp-observatory-m15-full-tests.txt"
+
+          grep -F "Ran 514 tests" \
+            "$RUNNER_TEMP/frp-observatory-m15-full-tests.txt"
+          grep -Fx "OK" \
+            "$RUNNER_TEMP/frp-observatory-m15-full-tests.txt"
+
+          git -C ../upstream diff --exit-code
+          if [[ -n "$(git -C ../upstream status --porcelain)" ]]; then
+            echo "The read-only FRP checkout was modified."
+            git -C ../upstream status --short
+            exit 1
+          fi
+
+          python - <<'PY'
+          import subprocess
+
+          expected = "?? tests/test_m31_published_dispatch.py"
+          status = subprocess.run(
+              [
+                  "git",
+                  "status",
+                  "--porcelain=v1",
+                  "--untracked-files=all",
+              ],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.splitlines()
+          if status not in ([], [expected]):
+              raise SystemExit(
+                  "Unexpected Observatory changes before publication: "
+                  f"{status!r}"
+              )
+          print("Read-only upstream and one-dispatch-test-file boundary: PASS")
+          PY
+
+      - name: Commit and publish only the M31 dispatch tests
+        working-directory: observatory
+        shell: bash
+        env:
+          TEST_SOURCE_SHA256: cf1689a9a930f6bd9a202f85318b5e5ccb8df3b262fb314b9de063e80769d3bb
+        run: |
+          set -euo pipefail
+          target="tests/test_m31_published_dispatch.py"
+
+          python - <<'PY'
+          import hashlib
+          import os
+          import subprocess
+          from pathlib import Path
+
+          target = Path("tests/test_m31_published_dispatch.py")
+          if target.is_symlink() or not target.is_file():
+              raise SystemExit("Exact M31 dispatch tests are missing")
+          observed = hashlib.sha256(target.read_bytes()).hexdigest()
+          if observed != os.environ["TEST_SOURCE_SHA256"]:
+              raise SystemExit(f"M31 dispatch test digest mismatch: {observed}")
+
+          expected_untracked = f"?? {target.as_posix()}"
+          status = subprocess.run(
+              [
+                  "git",
+                  "status",
+                  "--porcelain=v1",
+                  "--untracked-files=all",
+              ],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.splitlines()
+          if status not in ([], [expected_untracked]):
+              raise SystemExit(
+                  "Refusing publication with unrelated changes: "
+                  f"{status!r}"
+              )
+          PY
+
+          git add -- "$target"
+
+          staged="$(git diff --cached --name-only)"
+          if [[ -z "$staged" ]]; then
+            echo "Exact M31 dispatch tests are already published; no commit needed."
+            exit 0
+          fi
+          if [[ "$staged" != "$target" ]]; then
+            echo "Unexpected staged publication boundary:"
+            git diff --cached --name-only
+            exit 1
+          fi
+          if [[ -n "$(git diff --name-only)" ]]; then
+            echo "Unexpected unstaged tracked changes:"
+            git diff --name-only
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Add M31 published dispatch tests"
+          git push origin HEAD:main
+
+      - name: Publish M15 summary
+        if: success()
+        shell: bash
+        run: |
+          {
+            echo "## FRP Observatory M15"
+            echo
+            echo "- Exact M31 dispatch tests: 25"
+            echo "- Complete Observatory tests: 514"
+            echo "- Exact M31 published documents: 4"
+            echo "- Exact M31 dispatch envelopes: 6"
+            echo "- Artifact Auditor dispatches: 4"
+            echo "- Ternary Transition Visualizer dispatches: 1"
+            echo "- Trace Explorer dispatches: 1"
+            echo "- Legacy schema-only dispatcher reuse: forbidden"
+            echo "- Mode consumer invocation: deferred"
+            echo "- Source execution: forbidden"
+            echo "- Metric normalization: forbidden"
+            echo "- Semantic reimplementation: forbidden"
+            echo "- FRP source mutation: forbidden"
+            echo "- Downstream writeback: forbidden"
+            echo "- Published Observatory dispatch test files: 1"
+          } >> "$GITHUB_STEP_SUMMARY"
