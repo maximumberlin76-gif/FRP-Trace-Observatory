@@ -1,0 +1,407 @@
+name: FRP Observatory M11 M31 Published Boundary Tests
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: frp-observatory-m11-m31-published-boundary-tests-main
+  cancel-in-progress: false
+
+jobs:
+  publish-m31-boundary-tests:
+    name: Install and qualify exact M31 boundary tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out Observatory main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: observatory
+
+      - name: Check out FRP upstream main read-only
+        uses: actions/checkout@v4
+        with:
+          repository: maximumberlin76-gif/Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor
+          ref: main
+          path: upstream
+          persist-credentials: false
+
+      - name: Set up exact Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Require manual main-branch execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]]; then
+            echo "This workflow must be started manually."
+            exit 1
+          fi
+          if [[ "$GITHUB_REF_NAME" != "main" ]]; then
+            echo "Run this workflow manually from Branch: main."
+            exit 1
+          fi
+
+      - name: Verify exact M10 source boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          requirements = {
+              Path(
+                  "observatory/.github/workflows/"
+                  "frp-observatory-m10-m31-published-boundary-"
+                  "source-workflow.yml"
+              ): (
+                  28_577,
+                  "fc7c8f6d2a8be25b6379327d4ccd7b37"
+                  "78d18ac47d029b0fbb785c3284cb3444",
+              ),
+              Path(
+                  "observatory/artifact_auditor/"
+                  "m31_published_boundary_intake.py"
+              ): (
+                  32_266,
+                  "f3cfcbc5c388065f8544b16c07bb988d"
+                  "269ec3745d141de215ff48b0e72e277c",
+              ),
+          }
+          for target, (expected_bytes, expected_sha256) in requirements.items():
+              if target.is_symlink() or not target.is_file():
+                  raise SystemExit(f"Exact prerequisite is missing: {target}")
+              raw = target.read_bytes()
+              observed_sha256 = sha256(raw).hexdigest()
+              if len(raw) != expected_bytes:
+                  raise SystemExit(
+                      f"Prerequisite byte-count mismatch for {target}: "
+                      f"{len(raw)} != {expected_bytes}"
+                  )
+              if observed_sha256 != expected_sha256:
+                  raise SystemExit(
+                      f"Prerequisite digest mismatch for {target}: "
+                      f"{observed_sha256} != {expected_sha256}"
+                  )
+
+          target = Path(
+              "observatory/tests/"
+              "test_m31_published_boundary_intake.py"
+          )
+          expected_target_sha256 = (
+              "6366338358552d27b038a0ff3f08b12e"
+              "8bb376f1b09afa7dd0e59fc0706cf1d7"
+          )
+          if target.is_symlink():
+              raise SystemExit("M31 test target must not be a symlink")
+          if target.exists():
+              if not target.is_file():
+                  raise SystemExit("M31 test target is not a regular file")
+              observed = sha256(target.read_bytes()).hexdigest()
+              if observed != expected_target_sha256:
+                  raise SystemExit(
+                      "An unexpected M31 test file already exists: "
+                      f"{observed}"
+                  )
+              print("Exact M31 tests are already present")
+          else:
+              print("M31 test target is ready")
+
+          print("Exact M10 workflow prerequisite: PASS")
+          print("Exact M31 intake source prerequisite: PASS")
+          PY
+
+      - name: Install integrity-bound M31 tests
+        working-directory: observatory
+        shell: bash
+        env:
+          TEST_BASE64_LENGTH: "6280"
+          TEST_BASE64_SHA256: 3cd9e2b7f6671a0c7e9d301d51df7324389770f0e6a0d589afd3ba9179b6679e
+          TEST_GZIP_LENGTH: "4709"
+          TEST_GZIP_SHA256: 182c65bdc267276275ecdb0dabf26fd36d718b36332fa732c89aea20abc853af
+          TEST_SOURCE_LENGTH: "22234"
+          TEST_SOURCE_LINES: "603"
+          TEST_SOURCE_SHA256: 6366338358552d27b038a0ff3f08b12e8bb376f1b09afa7dd0e59fc0706cf1d7
+          TEST_GZIP_BASE64: |
+            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
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import gzip
+          import hashlib
+          import os
+          from pathlib import Path
+
+          encoded = "".join(os.environ["TEST_GZIP_BASE64"].split())
+          observed_encoded_sha256 = hashlib.sha256(
+              encoded.encode("ascii")
+          ).hexdigest()
+          if len(encoded) != int(os.environ["TEST_BASE64_LENGTH"]):
+              raise SystemExit("Test payload length mismatch")
+          if observed_encoded_sha256 != os.environ["TEST_BASE64_SHA256"]:
+              raise SystemExit("Test payload digest mismatch")
+
+          compressed = base64.b64decode(encoded, validate=True)
+          observed_compressed_sha256 = hashlib.sha256(compressed).hexdigest()
+          if len(compressed) != int(os.environ["TEST_GZIP_LENGTH"]):
+              raise SystemExit("Compressed test length mismatch")
+          if observed_compressed_sha256 != os.environ["TEST_GZIP_SHA256"]:
+              raise SystemExit("Compressed test digest mismatch")
+
+          source = gzip.decompress(compressed)
+          observed_source_sha256 = hashlib.sha256(source).hexdigest()
+          if len(source) != int(os.environ["TEST_SOURCE_LENGTH"]):
+              raise SystemExit("Decoded test length mismatch")
+          if source.count(b"\n") != int(os.environ["TEST_SOURCE_LINES"]):
+              raise SystemExit("Decoded test line-count mismatch")
+          if observed_source_sha256 != os.environ["TEST_SOURCE_SHA256"]:
+              raise SystemExit("Decoded test digest mismatch")
+          if not source.endswith(b"\n") or source.endswith(b"\n\n"):
+              raise SystemExit("Decoded test terminal newline mismatch")
+
+          parent = Path("tests")
+          target = parent / "test_m31_published_boundary_intake.py"
+          if parent.is_symlink() or not parent.is_dir():
+              raise SystemExit("tests package boundary is invalid")
+          if target.is_symlink():
+              raise SystemExit("M31 test target must not be a symlink")
+          if target.exists():
+              if target.read_bytes() != source:
+                  raise SystemExit(
+                      "Refusing to replace a non-identical M31 test file"
+                  )
+              print("Exact M31 tests were already installed")
+          else:
+              target.write_bytes(source)
+              print("Installed exact M31 tests")
+
+          if target.read_bytes() != source:
+              raise SystemExit("Installed M31 test verification failed")
+          print(f"test_bytes={len(source)}")
+          print(f"test_sha256={observed_source_sha256}")
+          PY
+
+      - name: Qualify exact M31 tests and full Observatory
+        working-directory: observatory
+        shell: bash
+        env:
+          FRP_M31_UPSTREAM_ROOT: ../upstream
+          FRP_M30_ARCHIVE_PATH: ../upstream/artifacts/m30/packages/frp-v3.2.0-m30-archival-release.tar.gz
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          set -euo pipefail
+          export PYTHONPYCACHEPREFIX="$RUNNER_TEMP/frp-observatory-m11-pycache"
+
+          python -m compileall -q \
+            artifact_auditor \
+            parsers \
+            tests \
+            trace_explorer \
+            transition_visualizer
+
+          python -m unittest \
+            tests.test_m31_published_boundary_intake \
+            -v 2>&1 \
+            | tee "$RUNNER_TEMP/frp-observatory-m11-m31-tests.txt"
+
+          grep -F "Ran 21 tests" \
+            "$RUNNER_TEMP/frp-observatory-m11-m31-tests.txt"
+          grep -Fx "OK" \
+            "$RUNNER_TEMP/frp-observatory-m11-m31-tests.txt"
+
+          python -m unittest discover \
+            -s tests \
+            -p 'test_*.py' \
+            -v 2>&1 \
+            | tee "$RUNNER_TEMP/frp-observatory-m11-full-tests.txt"
+
+          grep -F "Ran 468 tests" \
+            "$RUNNER_TEMP/frp-observatory-m11-full-tests.txt"
+          grep -Fx "OK" \
+            "$RUNNER_TEMP/frp-observatory-m11-full-tests.txt"
+
+          git -C ../upstream diff --exit-code
+          if [[ -n "$(git -C ../upstream status --porcelain)" ]]; then
+            echo "The read-only FRP checkout was modified."
+            git -C ../upstream status --short
+            exit 1
+          fi
+
+          python - <<'PY'
+          import subprocess
+
+          expected = (
+              "?? tests/"
+              "test_m31_published_boundary_intake.py"
+          )
+          status = subprocess.run(
+              [
+                  "git",
+                  "status",
+                  "--porcelain=v1",
+                  "--untracked-files=all",
+              ],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.splitlines()
+          if status not in ([], [expected]):
+              raise SystemExit(
+                  "Unexpected Observatory changes before publication: "
+                  f"{status!r}"
+              )
+          print("Read-only upstream and one-test-file boundary: PASS")
+          PY
+
+      - name: Commit and publish only the M31 tests
+        working-directory: observatory
+        shell: bash
+        env:
+          TEST_SOURCE_SHA256: 6366338358552d27b038a0ff3f08b12e8bb376f1b09afa7dd0e59fc0706cf1d7
+        run: |
+          set -euo pipefail
+          target="tests/test_m31_published_boundary_intake.py"
+
+          python - <<'PY'
+          import hashlib
+          import os
+          import subprocess
+          from pathlib import Path
+
+          target = Path("tests/test_m31_published_boundary_intake.py")
+          if target.is_symlink() or not target.is_file():
+              raise SystemExit("Exact M31 test file is missing")
+          observed = hashlib.sha256(target.read_bytes()).hexdigest()
+          if observed != os.environ["TEST_SOURCE_SHA256"]:
+              raise SystemExit(f"M31 test digest mismatch: {observed}")
+
+          expected_untracked = f"?? {target.as_posix()}"
+          status = subprocess.run(
+              [
+                  "git",
+                  "status",
+                  "--porcelain=v1",
+                  "--untracked-files=all",
+              ],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.splitlines()
+          if status not in ([], [expected_untracked]):
+              raise SystemExit(
+                  "Refusing publication with unrelated changes: "
+                  f"{status!r}"
+              )
+          PY
+
+          git add -- "$target"
+
+          staged="$(git diff --cached --name-only)"
+          if [[ -z "$staged" ]]; then
+            echo "Exact M31 tests are already published; no commit needed."
+            exit 0
+          fi
+          if [[ "$staged" != "$target" ]]; then
+            echo "Unexpected staged publication boundary:"
+            git diff --cached --name-only
+            exit 1
+          fi
+          if [[ -n "$(git diff --name-only)" ]]; then
+            echo "Unexpected unstaged tracked changes:"
+            git diff --name-only
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Add M31 published boundary intake tests"
+          git push origin HEAD:main
+
+      - name: Publish M11 summary
+        if: success()
+        shell: bash
+        run: |
+          {
+            echo "## FRP Observatory M11"
+            echo
+            echo "- Exact M31 boundary tests: 21 PASS"
+            echo "- Complete Observatory regression: 468 PASS"
+            echo "- One-byte document tamper rejection: PASS"
+            echo "- One-byte provenance tamper rejection: PASS"
+            echo "- One-byte M30 archive tamper rejection: PASS"
+            echo "- Upstream source execution: forbidden"
+            echo "- FRP source mutation: forbidden"
+            echo "- Downstream writeback: forbidden"
+            echo "- Published Observatory test files: 1"
+          } >> "$GITHUB_STEP_SUMMARY"
