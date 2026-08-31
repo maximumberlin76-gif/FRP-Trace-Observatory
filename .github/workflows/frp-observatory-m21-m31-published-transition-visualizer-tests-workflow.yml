@@ -1,0 +1,582 @@
+name: FRP Observatory M21 M31 Published Transition Visualizer Tests
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: frp-observatory-m21-m31-published-transition-visualizer-tests-main
+  cancel-in-progress: false
+
+jobs:
+  publish-m31-transition-visualizer-tests:
+    name: Install and qualify exact M31 Transition Visualizer tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out Observatory main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: observatory
+
+      - name: Check out FRP upstream main read-only
+        uses: actions/checkout@v4
+        with:
+          repository: maximumberlin76-gif/Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor
+          ref: main
+          path: upstream
+          persist-credentials: false
+
+      - name: Set up exact Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Require manual main-branch execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]]; then
+            echo "This workflow must be started manually."
+            exit 1
+          fi
+          if [[ "$GITHUB_REF_NAME" != "main" ]]; then
+            echo "Run this workflow manually from Branch: main."
+            exit 1
+          fi
+
+      - name: Verify exact M20 Transition Visualizer boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          requirements = {
+              Path(
+                  "observatory/artifact_auditor/"
+                  "m31_published_boundary_intake.py"
+              ): (
+                  32_266,
+                  "f3cfcbc5c388065f8544b16c07bb988d"
+                  "269ec3745d141de215ff48b0e72e277c",
+              ),
+              Path(
+                  "observatory/tests/"
+                  "test_m31_published_boundary_intake.py"
+              ): (
+                  22_234,
+                  "6366338358552d27b038a0ff3f08b12e"
+                  "8bb376f1b09afa7dd0e59fc0706cf1d7",
+              ),
+              Path(
+                  "observatory/schemas/"
+                  "m31_published_registry.py"
+              ): (
+                  22_102,
+                  "746a71a1fe2aaa1c367d1d6f6e2f65b0"
+                  "c32908ed89626b4d2335fe866f572e3e",
+              ),
+              Path(
+                  "observatory/tests/"
+                  "test_m31_published_registry.py"
+              ): (
+                  24_161,
+                  "cd8e89b4682a794dd6543ba779f5758e7"
+                  "6e4b344cbbc7c61341bd6caa2694970",
+              ),
+              Path(
+                  "observatory/parsers/"
+                  "m31_published_dispatch.py"
+              ): (
+                  16_928,
+                  "7140a132f929076f22d2c4868b6a068e"
+                  "a21c5593b9672bc45df6cb1e2b81c495",
+              ),
+              Path(
+                  "observatory/tests/"
+                  "test_m31_published_dispatch.py"
+              ): (
+                  23_063,
+                  "cf1689a9a930f6bd9a202f85318b5e5c"
+                  "cb8df3b262fb314b9de063e80769d3bb",
+              ),
+              Path(
+                  "observatory/artifact_auditor/"
+                  "m31_published_auditor.py"
+              ): (
+                  53_409,
+                  "efbcb971b946706e4102d4db37fb6fd2"
+                  "384ba2b63fefeadd1dc61cd78460dc66",
+              ),
+              Path(
+                  "observatory/tests/"
+                  "test_m31_published_auditor.py"
+              ): (
+                  27_245,
+                  "fa0e87af9509c6a9cb76083982eee791"
+                  "008d869520ffb29656a302a9a85e7b85",
+              ),
+              Path(
+                  "observatory/trace_explorer/"
+                  "m31_published_trace_explorer.py"
+              ): (
+                  79_396,
+                  "b0dac82ece92a0886c7ab968d3eed4e9"
+                  "df1ae76eb3d84bfe05bf19cb69ef2893",
+              ),
+              Path(
+                  "observatory/tests/"
+                  "test_m31_published_trace_explorer.py"
+              ): (
+                  29_180,
+                  "a176d49f4ccd10188fb096ab6e528316"
+                  "e0d98c956382a84fa2accbc869dd8cb5",
+              ),
+              Path(
+                  "observatory/transition_visualizer/"
+                  "m31_published_transition_visualizer.py"
+              ): (
+                  70_767,
+                  "33de1cc15240dda0fc75cdb1feb8efa4"
+                  "3e0d4e08026d98e8521939ae7162a96c",
+              ),
+          }
+          for target, (expected_bytes, expected_sha256) in requirements.items():
+              if target.is_symlink() or not target.is_file():
+                  raise SystemExit(f"Exact prerequisite is missing: {target}")
+              raw = target.read_bytes()
+              observed_sha256 = sha256(raw).hexdigest()
+              if len(raw) != expected_bytes:
+                  raise SystemExit(
+                      f"Prerequisite byte-count mismatch for {target}: "
+                      f"{len(raw)} != {expected_bytes}"
+                  )
+              if observed_sha256 != expected_sha256:
+                  raise SystemExit(
+                      f"Prerequisite digest mismatch for {target}: "
+                      f"{observed_sha256} != {expected_sha256}"
+                  )
+
+          target = Path(
+              "observatory/tests/"
+              "test_m31_published_transition_visualizer.py"
+          )
+          expected_target_sha256 = (
+              "f624116452dc765031ad06de9513046c9"
+              "9492c5689afe31d4b2954d87486969f"
+          )
+          if target.is_symlink():
+              raise SystemExit(
+                  "M31 Transition Visualizer test target is a symlink"
+              )
+          if target.exists():
+              if not target.is_file():
+                  raise SystemExit(
+                      "M31 Transition Visualizer test target is not a regular file"
+                  )
+              observed = sha256(target.read_bytes()).hexdigest()
+              if observed != expected_target_sha256:
+                  raise SystemExit(
+                      "Unexpected M31 Transition Visualizer tests already exist: "
+                      f"{observed}"
+                  )
+              print("Exact M31 Transition Visualizer tests are already present")
+          else:
+              print("M31 Transition Visualizer test target is ready")
+
+          print("Exact M20 Transition Visualizer prerequisite: PASS")
+          PY
+
+      - name: Install integrity-bound M31 Transition Visualizer tests
+        working-directory: observatory
+        shell: bash
+        env:
+          TEST_BASE64_LENGTH: "8864"
+          TEST_BASE64_SHA256: 933a39fdc62ec1c9533342e9f8726ffddc2e6cdd59c3d5613075b268eac0fa0d
+          TEST_GZIP_LENGTH: "6646"
+          TEST_GZIP_SHA256: b9938a4dc61ea69b3880c8c4c2e4f9cbab1712cf7d6b9a1d02e14164b9ad6445
+          TEST_LENGTH: "30076"
+          TEST_LINES: "788"
+          TEST_SHA256: f624116452dc765031ad06de9513046c99492c5689afe31d4b2954d87486969f
+          TEST_GZIP_BASE64: |
+            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
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64
+          import gzip
+          import hashlib
+          import os
+          from pathlib import Path
+
+          encoded = "".join(os.environ["TEST_GZIP_BASE64"].split())
+          observed_encoded_sha256 = hashlib.sha256(
+              encoded.encode("ascii")
+          ).hexdigest()
+          if len(encoded) != int(os.environ["TEST_BASE64_LENGTH"]):
+              raise SystemExit(
+                  "Transition Visualizer test payload length mismatch"
+              )
+          if observed_encoded_sha256 != os.environ["TEST_BASE64_SHA256"]:
+              raise SystemExit(
+                  "Transition Visualizer test payload digest mismatch"
+              )
+
+          compressed = base64.b64decode(encoded, validate=True)
+          observed_compressed_sha256 = hashlib.sha256(compressed).hexdigest()
+          if len(compressed) != int(os.environ["TEST_GZIP_LENGTH"]):
+              raise SystemExit(
+                  "Compressed visualizer test payload length mismatch"
+              )
+          if observed_compressed_sha256 != os.environ["TEST_GZIP_SHA256"]:
+              raise SystemExit(
+                  "Compressed visualizer test payload digest mismatch"
+              )
+
+          source = gzip.decompress(compressed)
+          observed_source_sha256 = hashlib.sha256(source).hexdigest()
+          if len(source) != int(os.environ["TEST_LENGTH"]):
+              raise SystemExit(
+                  "Decoded Transition Visualizer tests length mismatch"
+              )
+          if source.count(b"\n") != int(os.environ["TEST_LINES"]):
+              raise SystemExit(
+                  "Decoded Transition Visualizer tests line-count mismatch"
+              )
+          if observed_source_sha256 != os.environ["TEST_SHA256"]:
+              raise SystemExit(
+                  "Decoded Transition Visualizer tests digest mismatch"
+              )
+          if not source.endswith(b"\n") or source.endswith(b"\n\n"):
+              raise SystemExit(
+                  "Decoded Transition Visualizer tests newline mismatch"
+              )
+
+          target = Path("tests/test_m31_published_transition_visualizer.py")
+          if target.parent.is_symlink() or not target.parent.is_dir():
+              raise SystemExit("Observatory tests boundary is invalid")
+          if target.is_symlink():
+              raise SystemExit(
+                  "M31 Transition Visualizer test target is a symlink"
+              )
+          if target.exists():
+              if target.read_bytes() != source:
+                  raise SystemExit(
+                      "Refusing to replace non-identical visualizer tests"
+                  )
+              print("Exact M31 Transition Visualizer tests were already installed")
+          else:
+              target.write_bytes(source)
+              print("Installed exact M31 Transition Visualizer tests")
+
+          if target.read_bytes() != source:
+              raise SystemExit(
+                  "Installed Transition Visualizer test verification failed"
+              )
+          print(f"visualizer_test_bytes={len(source)}")
+          print(f"visualizer_test_sha256={observed_source_sha256}")
+          PY
+
+      - name: Qualify exact M31 Transition Visualizer tests
+        working-directory: observatory
+        shell: bash
+        env:
+          FRP_M31_UPSTREAM_ROOT: ../upstream
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          set -euo pipefail
+          export PYTHONPYCACHEPREFIX="$RUNNER_TEMP/frp-observatory-m21-pycache"
+
+          python -m compileall -q \
+            artifact_auditor \
+            parsers \
+            schemas \
+            tests \
+            trace_explorer \
+            transition_visualizer
+
+          python -m unittest \
+            tests.test_m31_published_transition_visualizer \
+            -v 2>&1 \
+            | tee "$RUNNER_TEMP/frp-observatory-m21-targeted-tests.txt"
+
+          grep -F "Ran 45 tests" \
+            "$RUNNER_TEMP/frp-observatory-m21-targeted-tests.txt"
+          grep -Fx "OK" \
+            "$RUNNER_TEMP/frp-observatory-m21-targeted-tests.txt"
+
+          python -m transition_visualizer.m31_published_transition_visualizer \
+            --upstream-root "$FRP_M31_UPSTREAM_ROOT" \
+            | tee "$RUNNER_TEMP/frp-observatory-m21-visualizer.txt"
+
+          result="$RUNNER_TEMP/frp-observatory-m21-visualizer.txt"
+          grep -Fx \
+            "FRP Observatory M31 published Transition Visualizer: PASS" \
+            "$result"
+          grep -Fx "transition_frames=800" "$result"
+          grep -Fx "active_zero_after_observations=702" "$result"
+          grep -Fx \
+            "classical_bit_addition_primary_mechanism=false" \
+            "$result"
+          grep -Fx "balanced_ternary_notation=-1/0/1" "$result"
+          grep -Fx "active_neutral_state=0" "$result"
+          grep -Fx "temporal_scheduler_modes=1/7,7/1" "$result"
+          grep -Fx \
+            'transition_classification_counts={"active_zero_to_polarity": 12, "direct_opposite": 0, "polarity_to_active_zero": 5, "retained_same": 783}' \
+            "$result"
+          grep -Fx \
+            'route_leg_counts={"first_leg_to_active_zero": 5, "non_route_transition": 790, "pending_route_completion": 5}' \
+            "$result"
+          grep -Fx "thermal_contours=4" "$result"
+          grep -Fx \
+            "historical_and_current_contours_separate=true" \
+            "$result"
+          grep -Fx "physical_temperature_measurements=0" "$result"
+          grep -Fx \
+            "dataset_sha256=0ad87af2486798918a86a8a9fababdb45cb2b633c0f66e7c9b80b590ca8ed304" \
+            "$result"
+          grep -Fx \
+            "visualizer_dataset_id=63a1feb9-1835-579e-ab00-eec4569e8ff3" \
+            "$result"
+          grep -Fx "source_execution=forbidden" "$result"
+          grep -Fx "metric_normalization=forbidden" "$result"
+          grep -Fx "thermal_contour_merging=forbidden" "$result"
+          grep -Fx "semantic_reimplementation=forbidden" "$result"
+          grep -Fx "source_mutation=forbidden" "$result"
+          grep -Fx "downstream_writeback=forbidden" "$result"
+
+          python -m unittest discover \
+            -s tests \
+            -p 'test_*.py' \
+            -v 2>&1 \
+            | tee "$RUNNER_TEMP/frp-observatory-m21-full-tests.txt"
+
+          grep -F "Ran 629 tests" \
+            "$RUNNER_TEMP/frp-observatory-m21-full-tests.txt"
+          grep -E '^OK( \(skipped=[0-9]+\))?$' \
+            "$RUNNER_TEMP/frp-observatory-m21-full-tests.txt"
+
+          git -C ../upstream diff --exit-code
+          if [[ -n "$(git -C ../upstream status --porcelain)" ]]; then
+            echo "The read-only FRP checkout was modified."
+            git -C ../upstream status --short
+            exit 1
+          fi
+
+          python - <<'PY'
+          import subprocess
+
+          expected = (
+              "?? tests/"
+              "test_m31_published_transition_visualizer.py"
+          )
+          status = subprocess.run(
+              [
+                  "git",
+                  "status",
+                  "--porcelain=v1",
+                  "--untracked-files=all",
+              ],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.splitlines()
+          if status not in ([], [expected]):
+              raise SystemExit(
+                  "Unexpected Observatory changes before publication: "
+                  f"{status!r}"
+              )
+          print("Read-only upstream and one-test-file boundary: PASS")
+          PY
+
+      - name: Commit and publish only the M31 Transition Visualizer tests
+        working-directory: observatory
+        shell: bash
+        env:
+          TEST_SHA256: f624116452dc765031ad06de9513046c99492c5689afe31d4b2954d87486969f
+        run: |
+          set -euo pipefail
+          target="tests/test_m31_published_transition_visualizer.py"
+
+          python - <<'PY'
+          import hashlib
+          import os
+          import subprocess
+          from pathlib import Path
+
+          target = Path(
+              "tests/test_m31_published_transition_visualizer.py"
+          )
+          if target.is_symlink() or not target.is_file():
+              raise SystemExit(
+                  "Exact M31 Transition Visualizer tests are missing"
+              )
+          observed = hashlib.sha256(target.read_bytes()).hexdigest()
+          if observed != os.environ["TEST_SHA256"]:
+              raise SystemExit(
+                  f"M31 Transition Visualizer test digest mismatch: {observed}"
+              )
+
+          expected_untracked = f"?? {target.as_posix()}"
+          status = subprocess.run(
+              [
+                  "git",
+                  "status",
+                  "--porcelain=v1",
+                  "--untracked-files=all",
+              ],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.splitlines()
+          if status not in ([], [expected_untracked]):
+              raise SystemExit(
+                  "Refusing publication with unrelated changes: "
+                  f"{status!r}"
+              )
+          PY
+
+          git add -- "$target"
+
+          staged="$(git diff --cached --name-only)"
+          if [[ -z "$staged" ]]; then
+            echo "Exact M31 Transition Visualizer tests are already published."
+            exit 0
+          fi
+          if [[ "$staged" != "$target" ]]; then
+            echo "Unexpected staged publication boundary:"
+            git diff --cached --name-only
+            exit 1
+          fi
+          if [[ -n "$(git diff --name-only)" ]]; then
+            echo "Unexpected unstaged tracked changes:"
+            git diff --name-only
+            exit 1
+          fi
+          git diff --cached --check
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Add M31 published Transition Visualizer tests"
+          git push origin HEAD:main
+
+      - name: Publish M21 summary
+        if: success()
+        shell: bash
+        run: |
+          {
+            echo "## FRP Observatory M21"
+            echo
+            echo "- Dedicated M31 Transition Visualizer tests: 45"
+            echo "- Complete Observatory tests: 629"
+            echo "- Exact source-linked transition frames: 800"
+            echo "- Active-zero after-observations: 702"
+            echo "- Direct opposite transitions: 0"
+            echo "- Active-zero first route legs: 5"
+            echo "- Pending route completions: 5"
+            echo "- Balanced ternary domain: -1/0/1"
+            echo "- Temporal scheduler modes: 1/7 and 7/1"
+            echo "- Separate thermal evidence panels: 4"
+            echo "- Physical temperature measurements: 0"
+            echo "- Source execution: forbidden"
+            echo "- Metric normalization: forbidden"
+            echo "- Thermal contour merging: forbidden"
+            echo "- Semantic reimplementation: forbidden"
+            echo "- FRP source mutation: forbidden"
+            echo "- Downstream writeback: forbidden"
+            echo "- Published Observatory test files: 1"
+          } >> "$GITHUB_STEP_SUMMARY"
