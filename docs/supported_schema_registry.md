@@ -1,27 +1,40 @@
+
 # FRP Trace Observatory Supported Schema Registry
 
-- **Registry status:** Implemented exact-match compatibility inventory
-- **Upstream audit baseline:** FRP v1.8.0 / M16
-- **Observatory version:** Not assigned
-- **Executable compatibility records:** 19
+- **Registry status:** Implemented exact-match compatibility inventories
+- **Audited upstream scopes:** FRP v1.8.0 / M16, M30 archive, M31 publication
+- **Base compatibility records:** 19
+- **M30 published-member registrations:** 4
+- **M30 exact mode routes:** 7
+- **M31 published-document registrations:** 4
+- **M31 exact mode routes:** 6
 - **Canonical upstream fixture copies:** 6
-- **Current local verification:** 275 tests, `OK`
+- **Current exact verification:** 655 tests, `OK`
 
 ## Purpose
 
-This document is the human-readable companion to `schemas/registry.py`. It
-records exact upstream identities, producers, evidence paths, formats,
-measurement contours, field contracts, fixtures, modes, and implementation
-states.
+This document is the human-readable companion to `schemas/registry.py`,
+`schemas/m30_published_registry.py`, and
+`schemas/m31_published_registry.py`. It records exact upstream identities,
+producers, evidence paths, formats, measurement contours, field contracts,
+fixtures, modes, immutable publication identities, and qualification states.
 FRP remains the sole authority for processor semantics. Registry membership
 does not create a new upstream schema and does not itself establish
 `supported` status.
 
 ## Registry Authority
 
-The executable registry contains identity and routing facts only. Lifecycle
-states in this document describe downstream implementation evidence and are
-not fields of `CompatibilityRecord`.
+The three executable registries contain identity and routing facts:
+
+- `schemas/registry.py` contains the 19 audited M16-baseline compatibility
+  records;
+- `schemas/m30_published_registry.py` contains four exact members captured
+  from the immutable M30 archive;
+- `schemas/m31_published_registry.py` contains four exact M31 publication
+  documents.
+
+Lifecycle states in this document describe downstream implementation evidence
+and are not fields of `CompatibilityRecord`.
 Exact matching rules are:
 
 - JSON identities use the exact `schema` value;
@@ -31,10 +44,16 @@ Exact matching rules are:
 - aliases, automatic upgrades, and implicit substitutions are prohibited;
 - filenames alone do not establish typed identity;
 - source bytes remain unchanged and receive a raw SHA-256 digest;
+- M30 members require exact member id, path, schema, byte length, raw SHA-256,
+  and archive identity;
+- M31 documents require exact role, path, identifier field, identifier value,
+  kind where applicable, byte length, and raw SHA-256;
 - producer commands are provenance and are never executed during loading.
 
 No formal upstream JSON Schema, canonical upstream CSV artifact, or
-machine-readable `frp.m16.*` schema was present in the audited baseline.
+machine-readable `frp.m16.*` schema was present in the audited FRP v1.8.0 /
+M16 baseline. The M31 publication independently supplies its exact formal
+JSON Schema.
 
 ## Lifecycle States
 
@@ -47,12 +66,16 @@ machine-readable `frp.m16.*` schema was present in the audited baseline.
 | `unsupported` | Identity is intentionally outside the current boundary |
 | `blocked_missing_fixture` | Required canonical upstream evidence is absent |
 
-- records 1–14 are `implemented`;
-- records 15–19 are `tested` against unchanged canonical fixture copies;
+- base records 1–14 are `implemented`;
+- base records 15–19 are `tested` against unchanged canonical fixture
+  copies;
 - the schema-free workload copy is tested only as manifest-bound evidence;
-- no record is `supported` because applicable CI workflow evidence is not yet
-  present;
-- records 1–14 still lack committed canonical upstream artifact instances.
+- the four M30 registrations and seven routes are qualified by the M8B
+  full-core transition-visualizer workflow;
+- the four M31 registrations and six routes are qualified by the M22
+  end-to-end workflow;
+- base records 1–14 retain their original implementation state and still lack
+  committed canonical upstream artifact instances.
 
 ## Exact Enumerations
 
@@ -69,15 +92,29 @@ Measurement contours:
 - `comparative_architecture_benchmark_suite`;
 - `hardware_informed_sensitivity_qualification`.
 
+M30 published measurement contours:
+
+- `m16_fpga_preparation_execution`;
+- `m27_long_run_telemetry_semantics`;
+- `m28_upstream_integration_contract`;
+- `m28_hierarchical_scaling_qualification`.
+
+M31 published measurement contours:
+
+- `formal_schema_definition`;
+- `phase_interference_active_zero_thermal_evidence`;
+- `publication_manifest`;
+- `publication_qualification`.
+
 Observatory modes:
 
 - `artifact_auditor` (`A`);
 - `ternary_transition_visualizer` (`V`);
 - `trace_explorer` (`T`).
 
-## Executable Compatibility Records
+## Base Compatibility Records
 
-All records are associated with audited upstream release `v1.8.0`.
+All base records are associated with audited upstream release `v1.8.0`.
 
 | No. | Exact identifier | Required kind | Format | Contour | Modes | State |
 |---:|---|---|---|---|---|---|
@@ -103,6 +140,149 @@ All records are associated with audited upstream release `v1.8.0`.
 
 Record 14 uses identifier field `format_version`; every other record uses
 identifier field `schema`.
+
+## M30 Digest-Bound Published Registry
+
+The M30 registry revision is `m30-published-boundary-v1`. Its authority is
+the immutable archive:
+
+`artifacts/m30/packages/frp-v3.2.0-m30-archival-release.tar.gz`
+
+Archive identity:
+
+- byte length: 10,189,989;
+- raw SHA-256:
+  `05ea33f6f3f505d315af930c2d51779f7189905308473f32a57375e477069caa`.
+
+The exact M30 registrations are:
+
+| Member id | Exact schema | Contour | Modes | Bytes | Raw SHA-256 | Upstream release |
+|---|---|---|---|---:|---|---|
+| `m16-fpga-preparation-execution-trace` | `frp.m16.fpga_preparation_execution_trace.v2.1.0` | `m16_fpga_preparation_execution` | A, V, T | 9,013 | `7d58b6741bdcadbfb9acb9049ed0e956305f49b9ad36946e719a4121b5caf22f` | `frp-v2.1.0-m19` |
+| `m27-telemetry-semantics` | `m27-telemetry-semantics-v2.9.0` | `m27_long_run_telemetry_semantics` | A, V | 2,789 | `813ae5c66ceaddabc77734d44f1ebf971ca3bd7e11c1984e2e0c8f0204dfd1bc` | `frp-v2.9.0-m27` |
+| `m28-trace-observatory-upstream-contract` | `frp.m28.trace_observatory_upstream_contract.v3.0.0` | `m28_upstream_integration_contract` | A | 2,735 | `556cd2921014d78184dad625438e053632c2650164f95787f39a6fc871b4a3f0` | `frp-v3.0.0-m28` |
+| `m28-hierarchical-scaling-contract` | `frp.m28.hierarchical_scaling_contract.v3.0.0` | `m28_hierarchical_scaling_qualification` | A | 3,560 | `13f85ac82b63d0191157bd2cfa04dd37358ef66d8e69bdb96bb1892abb77dbae` | `frp-v3.0.0-m28` |
+
+Their exact upstream paths are:
+
+| Member id | Exact upstream path |
+|---|---|
+| `m16-fpga-preparation-execution-trace` | `artifacts/m19/execution/m16-fpga-preparation-execution-trace.json` |
+| `m27-telemetry-semantics` | `artifacts/m27/telemetry/m27-telemetry-semantics.json` |
+| `m28-trace-observatory-upstream-contract` | `artifacts/m28/contracts/m28-trace-observatory-upstream-contract.json` |
+| `m28-hierarchical-scaling-contract` | `artifacts/m28/hierarchy/contracts/m28-hierarchical-scaling-contract.json` |
+
+Their deterministic compatibility keys are:
+
+| Member id | Compatibility key |
+|---|---|
+| `m16-fpga-preparation-execution-trace` | `a221aecb0d24518c8a2dd562405dad9b47ff53be5b4b2f6a972b6ecedc066ff2` |
+| `m27-telemetry-semantics` | `06c74930ea2d928fa07c0f2ca86ee886b67ce6846cdea855dba66acff0bb82b6` |
+| `m28-trace-observatory-upstream-contract` | `c5d60d4b37f669cc650b56be99bf61eb42ef837491e50cb9081cebc94cea14b0` |
+| `m28-hierarchical-scaling-contract` | `737e7e29b051a0928575508e506d31b0b275933a490f161b16de0264d4d01746` |
+
+The exact route counts are:
+
+- Artifact Auditor: 4;
+- Ternary Transition Visualizer: 2;
+- Trace Explorer: 1;
+- total: 7.
+
+The qualified M30 Artifact Auditor result contains four reports, 69 checks,
+zero failed checks, and batch SHA-256
+`aeb9c1d7390a3bc3d1d7ef35c5f3f110e195e9b7ac8d4a4f4636c47c0a99bd03`.
+
+The M30 Trace Explorer projection contains four records, 32 cell snapshots,
+eight requests, the observed `-1/0/1` state domain, and dataset SHA-256
+`4e6e0a1cd13dccbf6c6ab45850aefcb09d212fe4883f2d56c2c190dbee42bafd`.
+
+The M8B full-core Transition Visualizer qualification combines two exact trace
+sources into 100 trace records and 800 transition frames. Its dataset SHA-256
+is
+`7325fb188fd7709f28dda06765decaa29ac942895e4772b747291aec29ad3f2b`,
+and its visualizer dataset id is
+`68de3476-2e03-5506-93ea-062c3744e90d`.
+
+## M31 Digest-Bound Published Registry
+
+The M31 registry revision is `m31-published-boundary-v1`. It binds exactly
+four immutable upstream documents:
+
+| Role | Exact identifier | Required kind | Contour | Modes | Bytes | Raw SHA-256 |
+|---|---|---|---|---|---:|---|
+| Formal schema | `https://frp.example/schemas/m31/frp.m31.phase_interference_active_zero_thermal_evidence.v1.schema.json` | none | `formal_schema_definition` | A | 1,468 | `53d79d45d70753ccd24c3dc4c97af6fee481f86a9d7cdca7ef78b486c76479f7` |
+| Evidence | `frp.m31.phase_interference_active_zero_thermal_evidence.v1` | `phase_interference_active_zero_thermal_evidence` | `phase_interference_active_zero_thermal_evidence` | A, V, T | 39,993 | `bdaa676acbfb09d86d848070e8a2673c5ce6902657a0b13b2e4293383bec8b42` |
+| Manifest | `frp.m31.phase_interference_active_zero_thermal_evidence_manifest.v1` | `phase_interference_active_zero_thermal_evidence_manifest` | `publication_manifest` | A | 828 | `80f0841d0041cd22c2f76175b6139e601aede7b69823356ae1fefbce5f793e7c` |
+| Qualification | `frp.m31.phase_interference_active_zero_thermal_evidence_qualification.v1` | `phase_interference_active_zero_thermal_evidence_qualification` | `publication_qualification` | A | 1,512 | `4c2446f954e01ec0aa37cc6c0fc70cf4a87ec565c450628e31b0efcac9160224` |
+
+Their exact upstream paths and identifier fields are:
+
+| Role | Exact upstream path | Identifier field |
+|---|---|---|
+| Formal schema | `schemas/m31/frp.m31.phase_interference_active_zero_thermal_evidence.v1.schema.json` | `$id` |
+| Evidence | `artifacts/m31/evidence/m31-phase-interference-active-zero-thermal-evidence.json` | `schema` |
+| Manifest | `artifacts/m31/manifests/m31-phase-interference-active-zero-thermal-evidence-manifest.json` | `schema` |
+| Qualification | `artifacts/m31/qualification/m31-phase-interference-active-zero-thermal-evidence-qualification.json` | `schema` |
+
+Their deterministic compatibility keys are:
+
+| Role | Compatibility key |
+|---|---|
+| Formal schema | `0a3b92c08456517bd03e5c49ed683d490869688e6a2039f021228fc8db66b8b2` |
+| Evidence | `ac1a9fae03831d912e1b1abf42dd73713b506a10b28c7b65041cca2e2b56e296` |
+| Manifest | `8263f4f97b459fcdb5defbe2d9881bd1b7b0c52a3a94830dfb5cb16a982bc59e` |
+| Qualification | `594bd40bba735ff9572cde8e6cc38cfcbb184748aaa0ce5f394a38d24737187a` |
+
+The exact route counts are:
+
+- Artifact Auditor: 4;
+- Ternary Transition Visualizer: 1;
+- Trace Explorer: 1;
+- total: 6.
+
+The M22 end-to-end qualification verifies:
+
+- 4 published documents;
+- 4 Artifact Auditor reports;
+- 47 Artifact Auditor checks with zero failed checks;
+- 2 trace contours and 100 ordered trace records;
+- 800 source-linked cell snapshots and transition frames;
+- 200 request records;
+- balanced ternary domain `-1/0/1`;
+- active neutral state `0`;
+- 0 direct opposite transitions;
+- 4 separate thermal evidence contours;
+- 26 exact end-to-end tests.
+
+The qualified M31 Artifact Auditor batch SHA-256 is
+`3e5eb2ad76f2605a49cc8a53902435bdcc1b52afac40dcdb3132fd33ce94d591`.
+
+The exact document paths, provenance members, compatibility keys, derived
+dataset identities, thermal contours, and M9–M22 implementation history are
+recorded in
+[`docs/m31_published_boundary.md`](m31_published_boundary.md).
+
+## Current Cross-Registry Qualification
+
+With both exact upstream inputs configured:
+
+```
+FRP_M30_ARCHIVE_PATH=<exact M30 archive>
+FRP_M31_UPSTREAM_ROOT=<clean FRP checkout>
+python -m unittest discover -s tests -p 'test_*.py' -q
+```
+
+Current result:
+
+```
+Ran 655 tests
+
+OK
+```
+
+This run exercises the base registry, exact M30 archive and published-member
+contour, exact M31 publication contour, all three Observatory modes, and the
+complete M31 end-to-end qualification.
 
 ## Producer and Evidence Associations
 
@@ -308,7 +488,7 @@ and `32` respectively. Unknown fields are rejected.
 
 ## Producer Commands
 
-```text
+```
 # Structured output and M3
 python frp_prototype_v1_7_0.py --mode demo --output json
 python frp_prototype_v1_7_0.py --mode demo --output json --include-trace
@@ -420,8 +600,8 @@ Their producer workflows are
 `.github/workflows/frp-m16-fpga-preparation.yml`.
 
 These files remain non-executable qualification evidence outside typed M16
-loading. Target-independent FPGA preparation evidence is not physical-chip
-evidence.
+loading. FPGA preparation evidence retains its recorded target-independent
+qualification classification.
 
 ## Known Identifiers Outside the Executable Registry
 
@@ -462,9 +642,9 @@ Retained M14 constants remain outside the executable registry:
 
 No schema identifier is assigned to `frp_prototype_v0_9_3_mobile.py`.
 
-## Current Upstream Data Gaps
+## M16 Baseline Data Gaps
 
-The audited baseline lacks:
+The audited FRP v1.8.0 / M16 baseline lacks:
 
 - formal JSON Schema documents;
 - committed canonical structured full-trace JSON;
@@ -475,11 +655,12 @@ The audited baseline lacks:
 - a machine-readable v0.9.3 benchmark artifact;
 - retained CI artifact files referenced by M16 workflows.
 
-Observatory does not synthesize or reconstruct these missing artifacts.
+The M30 and M31 digest-bound publication registries preserve their own exact
+later evidence and do not rewrite the historical M16 compatibility baseline.
 
 ## Registry Change Requirements
 
-A record may become `supported` only after:
+A base compatibility record may become `supported` only after:
 
 1. exact identity and producer evidence are audited;
 2. required, optional, order, value, relation, and digest rules are recorded;
@@ -489,8 +670,19 @@ A record may become `supported` only after:
 6. documentation is synchronized;
 7. applicable CI workflow evidence passes.
 
-An upstream release never changes this registry automatically.
+An additional digest-bound publication registration requires:
+
+1. an immutable upstream source identity;
+2. an exact path, identifier, byte length, and raw SHA-256;
+3. a non-interchangeable measurement contour;
+4. explicit Observatory mode eligibility;
+5. mandatory identity and mutation-failure tests;
+6. end-to-end source immutability verification;
+7. synchronized documentation and passing CI qualification.
+
+An upstream release does not change any registry automatically.
 
 ## Author
 
-Maksym Marnov
+Maksym Marnov (Alchimist)  
+Berlin, Germany
