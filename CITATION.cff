@@ -4,24 +4,27 @@ title: "FRP Trace Observatory"
 abstract: >-
   FRP Trace Observatory is a deterministic, read-only validation, audit,
   trace-exploration, and transition-visualization layer for published Fractal
-  Resonance Processor artifacts. Version 1.0.0 completes Observatory M22 over
-  the FRP v3.3.0 M31 publication boundary while retaining the qualified M30
-  evidence chain, exact provenance, deterministic identities, and separate
-  measurement contours.
+  Resonance Processor artifacts. Version 1.0.1 carries the qualified
+  Observatory M22 implementation and evidence boundary into the enabled
+  GitHub-Zenodo archival path over the FRP v3.3.0 M31 publication boundary,
+  while retaining the qualified M30 evidence chain, exact provenance,
+  deterministic identities, and separate measurement contours.
 authors:
   - family-names: "Marnov"
     given-names: "Maksym"
     alias: "Alchimist"
+    orcid: "https://orcid.org/0009-0000-0832-9597"
     city: "Berlin"
     country: "DE"
 type: software
-version: "1.0.0"
+version: "1.0.1"
 date-released: "2026-09-06"
 license: Apache-2.0
 repository-code: "https://github.com/maximumberlin76-gif/FRP-Trace-Observatory"
 url: "https://github.com/maximumberlin76-gif/FRP-Trace-Observatory"
 keywords:
   - "Fractal Resonance Processor"
+  - "FRP Trace Observatory"
   - "ternary computing"
   - "balanced ternary"
   - "phase interference"
@@ -34,13 +37,15 @@ keywords:
   - "deterministic provenance"
 references:
   - type: software
-    title: "Fractal Resonance Processor — Ternary Resonant Coherence Processor"
+    title: "Fractal Resonance Processor (FRP): Ternary Fractal Resonant Coherence Processor"
     authors:
       - family-names: "Marnov"
         given-names: "Maksym"
         alias: "Alchimist"
+        orcid: "https://orcid.org/0009-0000-0832-9597"
     version: "3.3.0"
+    doi: "10.5281/zenodo.22513670"
     repository-code: "https://github.com/maximumberlin76-gif/Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor"
     scope: >-
       Upstream FRP implementation and M31 publication boundary qualified by
-      FRP Trace Observatory version 1.0.0.
+      FRP Trace Observatory version 1.0.1.
