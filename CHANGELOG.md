@@ -1,3 +1,4 @@
+
 # Changelog
 
 All notable completed changes to FRP Trace Observatory are recorded in this
@@ -5,6 +6,7 @@ file.
 
 - **Current implementation boundary:** Observatory M22
 - **Current qualified upstream boundary:** FRP M31
+- **Current release metadata:** 1.0.1
 - **Terminal M30 qualification:** Observatory M8B
 - **Terminal M31 qualification:** Observatory M22
 - **Current complete verification:** 655 tests, `OK`
@@ -14,6 +16,41 @@ This changelog records completed repository state by qualification boundary.
 Exact file history and commit ordering remain available in the Git history.
 Exact implementation-stage ordering is recorded in
 [docs/milestones.md](docs/milestones.md).
+
+## Version 1.0.1 — Zenodo Archival Metadata Boundary
+
+Status: **metadata synchronized and qualified**
+
+Version 1.0.1 carries the complete qualified Observatory M22 implementation
+and evidence boundary recorded by version 1.0.0 into the enabled
+GitHub-Zenodo archival path. The upstream reference is bound to the published
+FRP v3.3.0 M31 version DOI.
+
+### Updated
+
+- Updated `CITATION.cff` from version `1.0.0` to version `1.0.1`.
+- Added the author ORCID `0009-0000-0832-9597`.
+- Aligned the upstream software title with the published FRP v3.3.0 record.
+- Added the upstream FRP v3.3.0 version DOI
+  `10.5281/zenodo.22513670`.
+- Retained the Apache-2.0 license, canonical repository identity, software
+  classification, and Observatory keywords.
+
+### Preserved
+
+- Version 1.0.0 remains the first independent FRP Trace Observatory release.
+- The complete Observatory M1-M22 implementation remains retained.
+- The qualified M30 and M31 evidence chains remain retained with their exact
+  deterministic identities.
+- The complete verification boundary remains 655 tests with `OK`.
+- All historical workflows, benchmark contours, release records, and Git
+  history remain retained.
+
+### Qualification
+
+- `FRP Trace Observatory CI #48` completed successfully for commit `72fe29b`.
+- The qualified implementation, evidence artifacts, and acceptance identities
+  are unchanged by the metadata update.
 
 ## Observatory M22 — Complete FRP M31 Boundary
 
