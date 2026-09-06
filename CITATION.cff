@@ -4,11 +4,11 @@ title: "FRP Trace Observatory"
 abstract: >-
   FRP Trace Observatory is a deterministic, read-only validation, audit,
   trace-exploration, and transition-visualization layer for published Fractal
-  Resonance Processor artifacts. Version 1.0.2 carries the qualified
-  Observatory M22 implementation and evidence boundary into the active
-  GitHub-Zenodo release channel over the FRP v3.3.0 M31 publication boundary,
-  while retaining the qualified M30 evidence chain, exact provenance,
-  deterministic identities, and separate measurement contours.
+  Resonance Processor artifacts. Version 1.0.3 carries the qualified
+  Observatory M22 implementation and evidence boundary through the enabled
+  GitHub-Zenodo release integration over the FRP v3.3.0 M31 publication
+  boundary, while retaining the qualified M30 evidence chain, exact
+  provenance, deterministic identities, and separate measurement contours.
 authors:
   - family-names: "Marnov"
     given-names: "Maksym"
@@ -17,7 +17,7 @@ authors:
     city: "Berlin"
     country: "DE"
 type: software
-version: "1.0.2"
+version: "1.0.3"
 date-released: "2026-09-06"
 license: Apache-2.0
 repository-code: "https://github.com/maximumberlin76-gif/FRP-Trace-Observatory"
@@ -48,4 +48,4 @@ references:
     repository-code: "https://github.com/maximumberlin76-gif/Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor"
     scope: >-
       Upstream FRP implementation and M31 publication boundary qualified by
-      FRP Trace Observatory version 1.0.2.
+      FRP Trace Observatory version 1.0.3.
