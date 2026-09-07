@@ -6,7 +6,9 @@ file.
 
 - **Current implementation boundary:** Observatory M22
 - **Current qualified upstream boundary:** FRP M31
-- **Current release metadata:** 1.0.1
+- **Current release metadata:** 1.0.3
+- **Current version DOI:** [10.5281/zenodo.22537600](https://doi.org/10.5281/zenodo.22537600)
+- **Concept DOI:** [10.5281/zenodo.22537599](https://doi.org/10.5281/zenodo.22537599)
 - **Terminal M30 qualification:** Observatory M8B
 - **Terminal M31 qualification:** Observatory M22
 - **Current complete verification:** 655 tests, `OK`
@@ -16,6 +18,70 @@ This changelog records completed repository state by qualification boundary.
 Exact file history and commit ordering remain available in the Git history.
 Exact implementation-stage ordering is recorded in
 [docs/milestones.md](docs/milestones.md).
+
+## Version 1.0.3 — Zenodo-Archived Release
+
+Status: **published, archived, and qualified**
+
+Version 1.0.3 is the DOI-bearing Zenodo archival release of the complete
+Observatory M22 implementation over the published FRP v3.3.0 M31 boundary.
+The release retains the complete earlier M30 evidence chain and every
+qualified Observatory implementation stage.
+
+### Published
+
+- Published GitHub release and tag `v1.0.3`.
+- Archived the version 1.0.3 source through the enabled GitHub-Zenodo
+  integration.
+- Assigned the version DOI
+  [`10.5281/zenodo.22537600`](https://doi.org/10.5281/zenodo.22537600).
+- Established the version-independent concept DOI
+  [`10.5281/zenodo.22537599`](https://doi.org/10.5281/zenodo.22537599).
+- Recorded the software as `FRP Trace Observatory`, version `1.0.3`, released
+  on `2026-09-06`.
+
+### Synchronized
+
+- Updated `CITATION.cff` to version `1.0.3`.
+- Added the exact Zenodo version DOI to the current citation metadata.
+- Retained the upstream FRP v3.3.0 version DOI
+  `10.5281/zenodo.22513670`.
+- Retained the author identity, ORCID, Apache-2.0 license, repository identity,
+  keywords, and upstream software reference.
+
+### Preserved
+
+- The complete Observatory M1–M22 implementation and workflow history.
+- The qualified M30 and M31 source, audit, trace, and visualizer identities.
+- All historical evidence and benchmark contours.
+- The 26-test focused M31 qualification result.
+- The 655-test complete repository qualification result.
+- Every earlier release, tag, commit, successful run, and failed run.
+
+## Version 1.0.2 — GitHub-Zenodo Integration Boundary
+
+Status: **published and retained**
+
+Version 1.0.2 carried the qualified Observatory M22 repository state through
+the enabled GitHub-Zenodo repository integration boundary while preserving
+the exact implementation and evidence content of the preceding releases.
+
+### Updated
+
+- Updated `CITATION.cff` from version `1.0.1` to version `1.0.2`.
+- Synchronized the release metadata with the enabled repository integration.
+- Retained the qualified FRP v3.3.0 M31 upstream reference and version DOI.
+- Retained the canonical repository, author, ORCID, license, and software
+  classification.
+
+### Preserved
+
+- Version 1.0.0 remains the first independent FRP Trace Observatory release.
+- Version 1.0.1 remains the first Zenodo archival-metadata synchronization
+  boundary.
+- The complete Observatory M1–M22 implementation remains retained.
+- All M30 and M31 evidence identities, tests, workflows, benchmark contours,
+  and Git history remain retained.
 
 ## Version 1.0.1 — Zenodo Archival Metadata Boundary
 
