@@ -1,3 +1,4 @@
+
 <h1 align="center">FRP Trace Observatory</h1>
 
 <p align="center">
@@ -6,9 +7,11 @@
 
 <p align="center">
   <a href="https://github.com/maximumberlin76-gif/FRP-Trace-Observatory/actions/workflows/observatory-ci.yml"><img alt="FRP Trace Observatory CI" src="https://github.com/maximumberlin76-gif/FRP-Trace-Observatory/actions/workflows/observatory-ci.yml/badge.svg"></a>
+  <img alt="Release v1.0.3" src="https://img.shields.io/badge/Release-v1.0.3-0969da">
   <img alt="Observatory M22 complete" src="https://img.shields.io/badge/Observatory-M22%20complete-2ea44f">
   <img alt="FRP M31 qualified" src="https://img.shields.io/badge/FRP-M31%20qualified-2ea44f">
   <img alt="Python 3.12" src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white">
+  <a href="https://doi.org/10.5281/zenodo.22537600"><img alt="Zenodo DOI 10.5281/zenodo.22537600" src="https://zenodo.org/badge/DOI/10.5281/zenodo.22537600.svg"></a>
   <a href="LICENSE"><img alt="Apache License 2.0" src="https://img.shields.io/badge/License-Apache--2.0-D22128?logo=apache"></a>
 </p>
 
@@ -19,13 +22,21 @@ It turns exact upstream publication records into immutable audit reports,
 source-linked traces, and deterministic ternary transition datasets while
 preserving every source identity and measurement contour.
 
-The current repository closes the complete Observatory M22 qualification over
-the FRP M31 published boundary and retains the full earlier M30 evidence chain.
+The current published release is
+[v1.0.3](https://github.com/maximumberlin76-gif/FRP-Trace-Observatory/releases/tag/v1.0.3).
+It closes the complete Observatory M22 qualification over the FRP M31
+published boundary and retains the full earlier M30 evidence chain.
+
+The exact v1.0.3 archival record is identified by
+[version DOI 10.5281/zenodo.22537600](https://doi.org/10.5281/zenodo.22537600).
+The complete Observatory release series is identified by
+[concept DOI 10.5281/zenodo.22537599](https://doi.org/10.5281/zenodo.22537599).
 
 ## At a Glance
 
 | Property | Current repository state |
 |---|---|
+| Current release | v1.0.3 |
 | Observatory implementation | Complete through M22 |
 | Qualified FRP boundary | M31 |
 | Retained earlier boundary | M30 through Observatory M8B |
@@ -39,6 +50,8 @@ the FRP M31 published boundary and retains the full earlier M30 evidence chain.
 | Workflow inventory | 27 retained workflows |
 | Runtime | Python 3.12 |
 | Runtime dependencies | Python standard library |
+| Version DOI | [10.5281/zenodo.22537600](https://doi.org/10.5281/zenodo.22537600) |
+| Concept DOI | [10.5281/zenodo.22537599](https://doi.org/10.5281/zenodo.22537599) |
 | License | Apache License 2.0 |
 
 ## What the Observatory Provides
@@ -380,11 +393,13 @@ FRP-Trace-Observatory/
 ├── tests/                        # 655 unit and integration tests
 ├── trace_explorer/               # Source-linked trace models and builders
 ├── transition_visualizer/        # Transition, telemetry, invariant, and view layers
-├── CHANGELOG.md                  # Completed repository history
+├── CHANGELOG.md                  # Completed implementation and release history
+├── CITATION.cff                  # Software citation and DOI metadata
 ├── CONTRIBUTING.md               # Contribution and preservation contract
 ├── LICENSE                       # Apache License 2.0
 ├── NOTICE.md                     # Attribution and provenance notice
-└── README.md                     # Project entry point
+├── README.md                     # Project entry point
+└── RELEASE_NOTES_v1_0_1.md       # Retained v1.0.1 archival metadata record
 ```
 
 ## Documentation
@@ -399,7 +414,9 @@ FRP-Trace-Observatory/
 | [Normalized Data Model](docs/normalized_data_model.md) | Source, normalized, audit, trace, transition, telemetry, invariant, and view records |
 | [Supported Schema Registry](docs/supported_schema_registry.md) | Exact compatibility records, publication roles, parsers, validators, and routes |
 | [M31 Published Boundary](docs/m31_published_boundary.md) | Exact four-document M31 identity, provenance, audit, trace, and visualizer result |
-| [Changelog](CHANGELOG.md) | Completed changes through Observatory M22 / FRP M31 |
+| [Citation Metadata](CITATION.cff) | Current software citation, author identity, version DOI, and upstream FRP reference |
+| [Release Notes v1.0.1](RELEASE_NOTES_v1_0_1.md) | Retained GitHub-Zenodo metadata-boundary record |
+| [Changelog](CHANGELOG.md) | Completed changes through v1.0.3, Observatory M22, and FRP M31 |
 | [Contributing](CONTRIBUTING.md) | Test, provenance, determinism, documentation, and workflow requirements |
 | [Notice](NOTICE.md) | Author attribution, license boundary, and upstream provenance |
 
@@ -452,6 +469,19 @@ FRP Trace Observatory has an independent version lifecycle. An Observatory
 release identifies the exact Observatory source and the precise upstream FRP
 boundaries it qualifies.
 
+Current release records:
+
+| Record | Value |
+|---|---|
+| Release | [v1.0.3](https://github.com/maximumberlin76-gif/FRP-Trace-Observatory/releases/tag/v1.0.3) |
+| Release date | 2026-09-06 |
+| Observatory boundary | M22 |
+| Qualified FRP boundary | v3.3.0 / M31 |
+| Zenodo version DOI | [10.5281/zenodo.22537600](https://doi.org/10.5281/zenodo.22537600) |
+| Zenodo concept DOI | [10.5281/zenodo.22537599](https://doi.org/10.5281/zenodo.22537599) |
+| Complete qualification | 655 tests, `OK` |
+| Focused M31 qualification | 26 tests, `OK` |
+
 Release records preserve:
 
 - Observatory revision and release identity;
@@ -462,8 +492,27 @@ Release records preserve:
 - documentation and provenance state.
 
 The current completed implementation boundary is Observatory M22 over FRP
-M31. Release artifacts and tags are created only from a fully qualified
-repository state.
+M31. Version 1.0.3 is archived on Zenodo with its exact version DOI, while the
+concept DOI resolves the complete Observatory release series.
+
+## Citation
+
+The machine-readable citation record is
+[`CITATION.cff`](CITATION.cff).
+
+Cite the current archived release as:
+
+```
+Marnov, M. (2026). FRP Trace Observatory (v1.0.3). Zenodo.
+https://doi.org/10.5281/zenodo.22537600
+```
+
+Use the concept DOI for a version-independent reference to the Observatory
+release series:
+
+```
+https://doi.org/10.5281/zenodo.22537599
+```
 
 ## License and Attribution
 
