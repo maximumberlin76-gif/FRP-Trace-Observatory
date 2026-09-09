@@ -17,11 +17,12 @@ jobs:
     timeout-minutes: 25
 
     steps:
-      - name: Check out Observatory main
+      - name: Check out Observatory main with complete history
         uses: actions/checkout@v4
         with:
           ref: main
           path: observatory
+          fetch-depth: 0
 
       - name: Check out FRP upstream main read-only
         uses: actions/checkout@v4
@@ -76,6 +77,7 @@ jobs:
                   "9cc8726a8e46a9c11af4e15122bd3661",
               ),
           }
+
           for target, (expected_bytes, expected_sha256) in requirements.items():
               if target.is_symlink() or not target.is_file():
                   raise SystemExit(f"Exact prerequisite is missing: {target}")
@@ -92,140 +94,27 @@ jobs:
                       f"{observed_sha256} != {expected_sha256}"
                   )
 
-          target = Path(
-              "observatory/tests/"
-              "test_m32_published_boundary_intake.py"
-          )
-          expected_target_sha256 = (
-              "d4e85d96caf20d472b50157368169b622"
-              "4b8acab5e999c243d7907d31e0890d3"
-          )
-          if target.is_symlink():
-              raise SystemExit("M32 test target must not be a symlink")
-          if target.exists():
-              if not target.is_file():
-                  raise SystemExit("M32 test target is not a regular file")
-              observed = sha256(target.read_bytes()).hexdigest()
-              if observed != expected_target_sha256:
-                  raise SystemExit(
-                      "An unexpected M32 test file already exists: "
-                      f"{observed}"
-                  )
-              print("Exact M32 tests are already present")
-          else:
-              print("M32 test target is ready")
-
           print("Exact M24 workflow prerequisite: PASS")
           print("Exact M32 intake source prerequisite: PASS")
           PY
 
-      - name: Install integrity-bound M32 tests
+      - name: Recover and install integrity-bound M32 tests
         working-directory: observatory
         shell: bash
         env:
+          PAYLOAD_PROVENANCE_COMMIT: a981b715b07f09b8ac39ec7e642192eb9b9110be
+          PAYLOAD_PROVENANCE_BYTES: "23409"
+          PAYLOAD_PROVENANCE_SHA256: 36c7c2d8e76710e8f688c9d3221f0f4d5a5e9d1f4b0b8a37cb267bc09da41f4a
+          CANONICAL_WORKFLOW_BYTES: "23409"
+          CANONICAL_WORKFLOW_SHA256: 51e83964fe6e015cb6cd45b0ce1a96e6d4c3bcb5f4ba336adbb004ac665810fa
           TEST_BASE64_LENGTH: "9352"
+          TEST_BASE64_LINES: "94"
           TEST_BASE64_SHA256: 5f0efe79f38ff2b16d11e3d147a4faf160edbdbee283723366b9d0b51c47c975
           TEST_GZIP_LENGTH: "7012"
           TEST_GZIP_SHA256: 092a9851ebf538daa2deda5e04bb08714ee7107de124d06a1b4b5ccb3ffe2ca4
           TEST_SOURCE_LENGTH: "34961"
           TEST_SOURCE_LINES: "914"
           TEST_SOURCE_SHA256: d4e85d96caf20d472b50157368169b6224b8acab5e999c243d7907d31e0890d3
-          TEST_GZIP_BASE64: |
-            H4sIAAAAAAACA+w9a2/jOJLf8ysE4T7YvbYjyW8DPkwmnd4N0K9Lpwd38OUESqISbWTJI8nppIP896uiRD2ph5NO78zcNRqJLZFV
-            xWKxXiwysixf0jAKJdsPpOiGSvSemJEUUGINfc99kN5dfJY+jDVptzdcJ7yhlmT4e88iwYPkeBG5pSNZlo+O7MDfSrpu76N9QHVd
-            crY7P4gk4nl+RCLH98Kjo+TZDQlvXMfgX/8Z+h7/7If8U3izjxw3/bY3doFv0jB7/5B+3HtOFMEYYhpM33WpyTByIk6B4IgGlfcj
-            Ypi8zQey2zneNW8D7e8jIJK/Tp5siUeuOSSLRMR0SRjSFNO7wP9OvXMvjIhn0rMg8IMB8HLnEpOmnWjkbCnvwb8PJPz53feSdjsS
-            3eTwf4av8YuIbne246YALin+hul46wQwLj94SNo94Hh4q3MYP4GXyUSRIHJsmGed7C0HHo+2Y01PZ1jnM6zHM8yB9I4k+AfCoH/+
-            +uv78y//OHurv/10+vXD2cdL/fwt/Dy/PD/7MhA0uzj7+/mXy4v/gg+/nX85//RR1Ojy4uTjl9OL889iaF8+fb04PdNPP334cH6Z
-            Pv7Mqf41ITrmeuX1W9/cb6kXXfgujd/eEddB9uviwQ+O+kdHR/rXz0D32ckH/ezjb+cXnz6ywf52cnF+8uv7M2ktybBAdCQvbXjx
-            6dOlfKSf/efJ6aX+/tPJWxjaySU05XPd0xRtNpCW7L/C/kffHc/211wGRvvIROwWtSU9vCHadNZDiVgxQehLw3+XwihYsWEEFJac
-            x1fVKNd6hKtYNx5gcfT6/dENvbeca1govRS07To7HfCxRmUMH+FFgoJ8A/KxDQkC8iAAzpo5tgSrHVvH3eKuTkilE1gkAa45Njk9
-            WzaZYpAist3RQPrmRDcSyHH0IIX+PjDpSnpEHE9yAtiz6D1QoCAKl3o9QNGX1mtJlagL4NNHx8eSxinesF5X0v9AM/aMUf0tcCKa
-            kI1dOCdgiTpeD0RiD8h945+wlBgT4o8rPj4ndJLFHbcdcMXRzw05npDHW/qw4oAB6bbPdCw8HUj4FUYlMRgj/AZMfKpHEu13Lq2i
-            2FSgFwBf5eWDPeGjBfb7nmMSlwtXdeCZfLHJ76W4UV+PrP12F2bP8F+ehf1B4RX1QrQKJDQdZ/2OwJQV3+NMedFaKz4NQefowK5w
-            fRnsSz2I6/rfdI94ZXD99NPfJPm/PZl97Y+oZ/oW7cn7yB4uEqkSLxwUitJSYUpeSjXJORLrRA+nYBMCUKLMfva4FRrh11MS8ukC
-            63h2TwMTl4Ht3IP9dOL+DpgNFHx/j+b2970ToL4mnrTfAe8pATN0Q81beB1bWASGk4dIchNoJXpNT8Ci0r6DTz6q71Bn5rwXUtcu
-            rWnGYXg8Imxtnv2+J25xQpnQFR+xyUrwjALQpJW3TAiTFiiIrdaiAKEkN1XkdRp99O7TxYeT9/qX03+cfTgZdO8HNgdsyq9fP759
-            f3ZAtw8nH8/fnX25PKDLf3w9eX/+7vz05DI1f4Jh93/Q5MR6VEed97PnSA5BcLckPAa7eixXX9vBDv2NkUXBKdk6nhNGjqkHkavj
-            cgLlDPYX+HWnjmJAI9Q4cpXTMvdiYkz0Hp2UUIQRXg8L2IaAbciwDRNs3XCA/+fYuNwPxcI7dsSD8+3YsL7RZh6Kq9BZhPAVxA0N
-            qg5m+PrVxW080ZUZeE8TVdPV5XQgzXVNVeG7PtMmrzAysAeJkfzp62g6nljGQtPmmrpQFxOTmFNLNYlhTGaqZc3GArkwVGOmkuWS
-            goe5NJeL6Xg6HS+JNbbn1twimkj0Zpq1MFU6szRlaiy1mUam5nKqLBZja6xNl5oAzXxqTZXJ0p6TxXJGqKotpzOiqYppzKfGnCoi
-            NBZRVNUyzLk2s2aWapuKMbcM7ExsqlJVgGZsLbSJYtmzibGczCe2pahjxVxODKIo08V0KUKjzaipWWNwTq352JgsFWoo2ngKPFRU
-            w5gvTJFGAr6q05kKnZYqtDFUMlbobKlMpgttPn758gn32z/C4oHh6Mpydjj9nYK5gnJK46khj6eGd6r8PMyCwC/FBVJkKrZhaqZq
-            anSqKIa6tBSDLCbGeDJWyUId0/FyUkRd50uB/vRCM3B2P8+bqj4piEYaqG/p1qABs+eD5i45aWppmam2toaYwXhoaYTG2tq7QOQW
-            XO1q4/6Bsi3MBhymQcXMZfKJNA7nQ3Vo711uOIO9N1RHrn8ti4eqKlN9rmjil/Jyqs6Jopmgoqlmzhbz8Wxqj+eg3ibTMVkKtHWs
-            ShWQ2imlE202p+pUBSU3NbTZbDmfm3SpTutoqaFifqwKevQHP4I32p+EN9pr80YF7hwiN+CqjGeTGqomqkUXdKmZ2sJWp4q9sNTZ
-            2DbVyXhhTKxJDWvGC9UmE82az8hyrthLbTIzDItMZvPlZKlai+WBcqMez1+NN9qfhDfaS3jzB/IKDtack/FMV8davYkM6DVEGTSg
-            lp5lL3QSUN1mGe86k8iTE9K63XHZKFdpv8wQV3oKB5fvy5KJOcZfYAYy7AlS87mEWp7YfOyMCd4kf89esWjq5aiy8SW2FfBonXge
-            UMzQ6XsvBK8ZvIKI4DZErUvCAuhDuR+HxJ16qT9mzsDJwmR8mswKCxlHpnbioQykRxnzTvIKvHY/2GIGk72QnwYSeyNt92Ekl12D
-            rHduchHIaHSczzIgFOSsFFAX4uc72gApnhXbAY8HfrgWgnMsBgJpkIymzreOxzrkqMfttoYeOX0AHTElip12fuggnbgZR69p0AAg
-            c/cQ8YksvZFmE4Th+t9oYJKwSm8sCXWD/bdktImUEc+S2LDqoSSjRiFt6Zjp0LyuG0jmDfGuaTiQtjQMyTWOuyo9xcWWrdJwb2B2
-            tpcAWSe/S4uzfmVfAIfvxQawZSeq/C+hXmBVVsL2iQ7qZYx484ZTf1RZRtlSFCykR1kUVCRrgRltZq7bV8KzRfJZovgY6+EH6KB0
-            xFKMSBCTCh4gdgZPUAKxQsNeK3NNkpZj8F9X1rJBVqUttVLJJqofJJYp1DmPAt+PdFjaOm5q6mayWRLWmarOXOg4eplvozBCpEQj
-            SwQ3tnCjBWYYdzrzeYEiO1q2h3tqbuEx4qs78b2+REK2Y8+eF+EzstaMiF7apBgkb50wRFrXceNjMCzxE/no2QJ0gPDAirveuySQ
-            LD6gciasKkBtXEsGkOPdq47A9YkF6EkmAHyLfUi+gf/68gGJlxBMl3gxpgStBdUAfVHWpCg0lLg5ccCvcqXBaHsLM9YrypLreLe5
-            nvhVLvmkD9XRY7NR+LDF33rk9xD8QIpIcE0jTIilksH2aIsY6b1JwRn89IVNDq4EeFJFEWvLW2fH1KUtAzbDdx2T4Q6lvUfuiOMS
-            w8WqAIDAiwL+jNKPQ8Id5V/S3WIc+FfPBRUdE+uHI+rdOYHvjYDFvebyk0RebPmxud2T5ISsNCOkkYx1LfGO9hlmM0UcOUeTGrD9
-            o+6b23HhWFIxhC4dse5oEJLAAZG1YQr3AQ0lck2wuIGXlWVb278wmiCgufGt1MQAvV93p/iiZ7qhwGrA01FR0ScatTA1GVM3zYzK
-            IpI+BGah797RHtoLMyrJN+KFBnsXER6kIioUF4Uq0w/lAiKRn4LA0mItdOPQ3xNkmi0YwQgrv7CcoroqNkJV9Uas2zpvM/+YLYyG
-            VFQLkTFtnUmM2yGB2eTyzlkA3pW2qyNx7rtfI+2/lCoM+QpIZ9f0dw/pIuDlfBuU9avVK/ghaCO4mMqV9kILg0zkwQJnY1E4Bco/
-            Zvq6uixG//QdD3v13nCgo3DnOlFPPpb71c2E2CYlFu55nUc78Ag8Prj4S1J8BNrNAW/XvxXYOTYOVq46wknSevGguJksNn7A4JnR
-                        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
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -233,55 +122,180 @@ jobs:
           import gzip
           import hashlib
           import os
+          import subprocess
           from pathlib import Path
 
-          encoded = "".join(os.environ["TEST_GZIP_BASE64"].split())
-          observed_encoded_sha256 = hashlib.sha256(
-              encoded.encode("ascii")
+          workflow_path = (
+              ".github/workflows/"
+              "frp-observatory-m25-m32-published-boundary-"
+              "tests-workflow.yml"
+          )
+          provenance_commit = os.environ["PAYLOAD_PROVENANCE_COMMIT"]
+
+          resolved_commit = subprocess.run(
+              ["git", "rev-parse", f"{provenance_commit}^{{commit}}"],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout.strip()
+          if resolved_commit != provenance_commit:
+              raise SystemExit(
+                  "Payload provenance commit identity mismatch: "
+                  f"{resolved_commit}"
+              )
+
+          ancestor = subprocess.run(
+              [
+                  "git",
+                  "merge-base",
+                  "--is-ancestor",
+                  provenance_commit,
+                  "HEAD",
+              ],
+              check=False,
+          )
+          if ancestor.returncode != 0:
+              raise SystemExit(
+                  "Payload provenance commit is not an ancestor of HEAD"
+              )
+
+          provenance = subprocess.run(
+              ["git", "show", f"{provenance_commit}:{workflow_path}"],
+              check=True,
+              capture_output=True,
+          ).stdout
+          provenance_sha256 = hashlib.sha256(provenance).hexdigest()
+          if len(provenance) != int(os.environ["PAYLOAD_PROVENANCE_BYTES"]):
+              raise SystemExit(
+                  "Payload provenance byte-count mismatch: "
+                  f"{len(provenance)}"
+              )
+          if provenance_sha256 != os.environ["PAYLOAD_PROVENANCE_SHA256"]:
+              raise SystemExit(
+                  "Payload provenance digest mismatch: "
+                  f"{provenance_sha256}"
+              )
+
+          corrections = (
+              (
+                  b"LD6giciasKkBtXEsGkOPdq47A9YkF6EkmAHyLfUi+gf/68gG",
+                  b"LD6gciasKkBtXEsGkOPdq47A9YkF6EkmAHyLfUi+gf/68gG",
+              ),
+              (
+                  b"Zvq6uixG//QdD3v13Cgo3DnOlFPPpb71c2E2CYlFu55nUc78",
+                  b"Zvq6uixG//QdD3v13nCgo3DnOlFPPpb71c2E2CYlFu55nUc78",
+              ),
+          )
+          canonical_workflow = provenance
+          for old, new in corrections:
+              if canonical_workflow.count(old) != 1:
+                  raise SystemExit(
+                      "Payload provenance correction boundary mismatch"
+                  )
+              canonical_workflow = canonical_workflow.replace(old, new, 1)
+
+          canonical_workflow_sha256 = hashlib.sha256(
+              canonical_workflow
           ).hexdigest()
+          if len(canonical_workflow) != int(
+              os.environ["CANONICAL_WORKFLOW_BYTES"]
+          ):
+              raise SystemExit(
+                  "Recovered canonical workflow byte-count mismatch: "
+                  f"{len(canonical_workflow)}"
+              )
+          if canonical_workflow_sha256 != os.environ[
+              "CANONICAL_WORKFLOW_SHA256"
+          ]:
+              raise SystemExit(
+                  "Recovered canonical workflow digest mismatch: "
+                  f"{canonical_workflow_sha256}"
+              )
+
+          marker = b"          TEST_GZIP_BASE64: |\n"
+          if canonical_workflow.count(marker) != 1:
+              raise SystemExit("Canonical payload marker mismatch")
+          payload_lines = []
+          for line in canonical_workflow.split(marker, 1)[1].splitlines():
+              if not line.startswith(b"            "):
+                  break
+              payload_lines.append(line[12:])
+
+          if len(payload_lines) != int(os.environ["TEST_BASE64_LINES"]):
+              raise SystemExit(
+                  "Test payload line-count mismatch: "
+                  f"{len(payload_lines)}"
+              )
+          encoded = b"".join(payload_lines)
+          encoded_sha256 = hashlib.sha256(encoded).hexdigest()
           if len(encoded) != int(os.environ["TEST_BASE64_LENGTH"]):
-              raise SystemExit("Test payload length mismatch")
-          if observed_encoded_sha256 != os.environ["TEST_BASE64_SHA256"]:
-              raise SystemExit("Test payload digest mismatch")
+              raise SystemExit(
+                  f"Test payload length mismatch: {len(encoded)}"
+              )
+          if encoded_sha256 != os.environ["TEST_BASE64_SHA256"]:
+              raise SystemExit(
+                  f"Test payload digest mismatch: {encoded_sha256}"
+              )
 
           compressed = base64.b64decode(encoded, validate=True)
-          observed_compressed_sha256 = hashlib.sha256(compressed).hexdigest()
+          compressed_sha256 = hashlib.sha256(compressed).hexdigest()
           if len(compressed) != int(os.environ["TEST_GZIP_LENGTH"]):
-              raise SystemExit("Compressed test length mismatch")
-          if observed_compressed_sha256 != os.environ["TEST_GZIP_SHA256"]:
-              raise SystemExit("Compressed test digest mismatch")
+              raise SystemExit(
+                  f"Compressed test length mismatch: {len(compressed)}"
+              )
+          if compressed_sha256 != os.environ["TEST_GZIP_SHA256"]:
+              raise SystemExit(
+                  f"Compressed test digest mismatch: {compressed_sha256}"
+              )
 
           source = gzip.decompress(compressed)
-          observed_source_sha256 = hashlib.sha256(source).hexdigest()
+          source_sha256 = hashlib.sha256(source).hexdigest()
+          source_lines = source.count(b"\n")
           if len(source) != int(os.environ["TEST_SOURCE_LENGTH"]):
-              raise SystemExit("Decoded test length mismatch")
-          if source.count(b"\n") != int(os.environ["TEST_SOURCE_LINES"]):
-              raise SystemExit("Decoded test line-count mismatch")
-          if observed_source_sha256 != os.environ["TEST_SOURCE_SHA256"]:
-              raise SystemExit("Decoded test digest mismatch")
+              raise SystemExit(
+                  f"Test source length mismatch: {len(source)}"
+              )
+          if source_lines != int(os.environ["TEST_SOURCE_LINES"]):
+              raise SystemExit(
+                  f"Test source line-count mismatch: {source_lines}"
+              )
+          if source_sha256 != os.environ["TEST_SOURCE_SHA256"]:
+              raise SystemExit(
+                  f"Test source digest mismatch: {source_sha256}"
+              )
           if not source.endswith(b"\n") or source.endswith(b"\n\n"):
-              raise SystemExit("Decoded test terminal newline mismatch")
+              raise SystemExit("Test source terminal-newline mismatch")
+          if b"\r" in source:
+              raise SystemExit("Test source contains a carriage return")
+          source.decode("utf-8")
 
-          parent = Path("tests")
-          target = parent / "test_m32_published_boundary_intake.py"
-          if parent.is_symlink() or not parent.is_dir():
-              raise SystemExit("tests package boundary is invalid")
+          tests_directory = Path("tests")
+          target = tests_directory / "test_m32_published_boundary_intake.py"
+          temporary = tests_directory / ".test_m32_published_boundary_intake.tmp"
+          if tests_directory.is_symlink() or not tests_directory.is_dir():
+              raise SystemExit("Tests directory boundary mismatch")
           if target.is_symlink():
               raise SystemExit("M32 test target must not be a symlink")
           if target.exists():
-              if target.read_bytes() != source:
+              if not target.is_file():
+                  raise SystemExit("M32 test target is not a regular file")
+              observed = hashlib.sha256(target.read_bytes()).hexdigest()
+              if observed != os.environ["TEST_SOURCE_SHA256"]:
                   raise SystemExit(
-                      "Refusing to replace a non-identical M32 test file"
+                      "An unexpected M32 test file already exists: "
+                      f"{observed}"
                   )
-              print("Exact M32 tests were already installed")
+              print("Exact M32 tests are already present")
           else:
-              target.write_bytes(source)
-              print("Installed exact M32 tests")
+              if temporary.exists() or temporary.is_symlink():
+                  raise SystemExit("Temporary test path is not clean")
+              temporary.write_bytes(source)
+              temporary.replace(target)
+              print("Exact M32 tests installed")
 
-          if target.read_bytes() != source:
-              raise SystemExit("Installed M32 test verification failed")
-          print(f"test_bytes={len(source)}")
-          print(f"test_sha256={observed_source_sha256}")
+          print(f"Payload provenance SHA-256: {provenance_sha256}")
+          print(f"Canonical workflow SHA-256: {canonical_workflow_sha256}")
+          print(f"M32 test source SHA-256: {source_sha256}")
           PY
 
       - name: Qualify exact M32 tests and full Observatory
@@ -430,10 +444,12 @@ jobs:
             echo "## FRP Observatory M25"
             echo
             echo "- Exact M24 prerequisites: PASS"
+            echo "- Immutable payload provenance: PASS"
             echo "- Exact M32 boundary tests: 23 PASS"
             echo "- Complete Observatory regression: 678 PASS"
             echo "- One-byte document tamper rejection: PASS"
             echo "- One-byte source-identity tamper rejection: PASS"
+            echo "- Historical workflow execution: forbidden"
             echo "- Upstream workflow execution: forbidden"
             echo "- FRP source mutation: forbidden"
             echo "- Downstream writeback: forbidden"
