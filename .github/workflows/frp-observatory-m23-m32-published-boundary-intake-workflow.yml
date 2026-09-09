@@ -1,0 +1,776 @@
+name: FRP Observatory M23 M32 Published Boundary Intake
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frp-observatory-m23-m32-published-boundary-intake-main
+  cancel-in-progress: false
+
+jobs:
+  qualify-m32-published-boundary:
+    name: Qualify exact read-only M32 publication boundary
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out Observatory main read-only
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: observatory
+          persist-credentials: false
+
+      - name: Check out FRP upstream main read-only
+        uses: actions/checkout@v4
+        with:
+          repository: maximumberlin76-gif/Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor
+          ref: main
+          path: upstream
+          persist-credentials: false
+
+      - name: Set up exact Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install exact validation dependency
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install \
+            --disable-pip-version-check \
+            jsonschema==4.25.1
+
+      - name: Require manual main-branch execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_EVENT_NAME}" = "workflow_dispatch"
+          test "${GITHUB_REF}" = "refs/heads/main"
+          test "${GITHUB_REF_NAME}" = "main"
+          test -z "$(git -C observatory status --porcelain)"
+          test -z "$(git -C upstream status --porcelain)"
+          printf '%s\n' "Manual main-branch boundary: PASS"
+
+      - name: Validate the exact M32 published boundary
+        shell: bash
+        env:
+          UPSTREAM_ROOT: upstream
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from __future__ import annotations
+
+          import copy
+          import hashlib
+          import json
+          import os
+          from collections import Counter
+          from pathlib import Path, PurePosixPath
+
+          import jsonschema
+
+          SOURCE_COMMIT = "c0bc0fbc2c1c2e500b19d0ba84b3431a813e3941"
+
+          DOCUMENTS = {
+              "schema": (
+                  "schemas/m32/"
+                  "frp.m32.deterministic_rtl_trace_bundle.v1.schema.json",
+                  34_066,
+                  "534db8227218184cac5d1cabb461dd63b1b61a99e0269c98535539ad3f7d7da2",
+              ),
+              "bundle": (
+                  "artifacts/m32/exports/"
+                  "m32-deterministic-rtl-trace-bundle.json",
+                  412_195,
+                  "62d8c1e6d205b9262a5c950883d3259275d5049f7a896ae12956a210cb75b7e0",
+              ),
+              "manifest": (
+                  "artifacts/m32/manifests/"
+                  "m32-deterministic-rtl-trace-manifest.json",
+                  7_211,
+                  "da011dbc726d6d1fc0b7dbae12afe1e13d8240df64b9474fd0130c94ba005859",
+              ),
+              "qualification": (
+                  "artifacts/m32/qualification/"
+                  "m32-deterministic-rtl-trace-qualification.json",
+                  4_624,
+                  "26ec2d3eadd73b490eb023572101bb78cf5d11561ead91b78b1a30e690458273",
+              ),
+          }
+
+          PAYLOAD_DIGESTS = {
+              "bundle_sha256": (
+                  "63b36c1fb29d28a33bb5387d7658c97fc0a51f6823f79dc71382132236685f9b"
+              ),
+              "manifest_sha256": (
+                  "a9dd7d470fd094cb1dbb6fa360f6c28bf50d4aae4bf2f1ba34ad223655968c2e"
+              ),
+              "qualification_sha256": (
+                  "a695ccb3c7f083e219ff6908dfc38e6f4e7ef37fca6da22f40c6303117027c5d"
+              ),
+          }
+
+          TRANSCRIPT_IDENTITIES = [
+              {
+                  "artifact_member_path": "m32-mode-7-1-full-trace-run-1.log",
+                  "byte_count": 105_702,
+                  "raw_sha256": (
+                      "9517a02cd1ce2c687365f3712a453a9370e505ee4267e151fd05b266977ce915"
+                  ),
+                  "replay": 1,
+                  "scheduler_mode": "7/1",
+              },
+              {
+                  "artifact_member_path": "m32-mode-7-1-full-trace-run-2.log",
+                  "byte_count": 105_702,
+                  "raw_sha256": (
+                      "9517a02cd1ce2c687365f3712a453a9370e505ee4267e151fd05b266977ce915"
+                  ),
+                  "replay": 2,
+                  "scheduler_mode": "7/1",
+              },
+              {
+                  "artifact_member_path": "m32-mode-1-7-full-trace-run-1.log",
+                  "byte_count": 112_364,
+                  "raw_sha256": (
+                      "41de8e92c28f150f8d163fc1438b4d4381fa42d76a970f9246bbda4679491d89"
+                  ),
+                  "replay": 1,
+                  "scheduler_mode": "1/7",
+              },
+              {
+                  "artifact_member_path": "m32-mode-1-7-full-trace-run-2.log",
+                  "byte_count": 112_364,
+                  "raw_sha256": (
+                      "41de8e92c28f150f8d163fc1438b4d4381fa42d76a970f9246bbda4679491d89"
+                  ),
+                  "replay": 2,
+                  "scheduler_mode": "1/7",
+              },
+          ]
+
+          QUALIFICATION_CHECK_IDS = [
+              "source_identities_exact",
+              "workflow_identity_exact",
+              "mode_7_1_primary_transcript_identity_exact",
+              "mode_7_1_replay_transcript_identity_exact",
+              "mode_7_1_replays_byte_identical",
+              "mode_1_7_primary_transcript_identity_exact",
+              "mode_1_7_replay_transcript_identity_exact",
+              "mode_1_7_replays_byte_identical",
+              "mode_7_1_scheduler_cadence_exact",
+              "mode_1_7_scheduler_cadence_exact",
+              "source_tick_coordinates_complete",
+              "cell_coordinates_complete",
+              "request_lane_coordinates_complete",
+              "packed_bank_matches_cell_records",
+              "packed_masks_match_cell_records",
+              "ternary_code_value_pairs_valid",
+              "active_zero_markers_exact",
+              "pending_route_markers_exact",
+              "phase_derived_target_separate_from_execution",
+              "registered_target_separate_from_execution",
+              "source_boundary_and_execution_fields_separate",
+              "first_route_legs_observed",
+              "second_route_legs_observed",
+              "route_legs_separately_observable",
+              "direct_opposite_transitions_absent",
+              "reserved_state_events_zero",
+              "queue_overflow_events_zero",
+              "invariant_flags_all_valid",
+              "phase_evolution_records_present",
+              "local_effective_gamma_records_present",
+              "relative_phase_interference_records_present",
+              "retained_frequency_dynamics_observed",
+              "phase_order_scales_separate",
+              "coherence_capacity_separate_from_phase_order",
+              "thermal_telemetry_present",
+              "stability_telemetry_present",
+              "canonical_bundle_schema_valid",
+              "canonical_bundle_digest_reproduced",
+          ]
+
+          TRACE_PROFILES = {
+              "7/1": {
+                  "scheduler_mode_code": 1,
+                  "source_tick_count": 16,
+                  "sample_record_count": 16,
+                  "bank_record_count": 16,
+                  "cell_record_count": 128,
+                  "request_record_count": 32,
+                  "record_count": 192,
+                  "active_zero_cell_observation_count": 115,
+                  "scheduler_state_counts": {"balance": 14, "commit": 2},
+                  "first_route_leg_coordinates": [
+                      {"source_tick": 9, "source_cell": 0}
+                  ],
+                  "second_route_leg_coordinates": [
+                      {"source_tick": 15, "source_cell": 0}
+                  ],
+                  "records_sha256": (
+                      "bc412e6d548cb1d7f4a2264b526d6d98ac669b75e59c03cd5dbc7cd88756f033"
+                  ),
+              },
+              "1/7": {
+                  "scheduler_mode_code": 2,
+                  "source_tick_count": 17,
+                  "sample_record_count": 17,
+                  "bank_record_count": 17,
+                  "cell_record_count": 136,
+                  "request_record_count": 34,
+                  "record_count": 204,
+                  "active_zero_cell_observation_count": 123,
+                  "scheduler_state_counts": {"excite": 3, "neutralize": 14},
+                  "first_route_leg_coordinates": [
+                      {"source_tick": 10, "source_cell": 0}
+                  ],
+                  "second_route_leg_coordinates": [
+                      {"source_tick": 16, "source_cell": 0}
+                  ],
+                  "records_sha256": (
+                      "dfb28db5a8bcef2b43c83edd6b420a2286f8f804cfbaead716c2647cffbdf1f5"
+                  ),
+              },
+          }
+
+
+          def digest(raw: bytes) -> str:
+              return hashlib.sha256(raw).hexdigest()
+
+
+          def reject_constant(value: str) -> object:
+              raise ValueError(f"non-finite JSON value: {value}")
+
+
+          def unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+              result: dict[str, object] = {}
+              for key, value in pairs:
+                  if key in result:
+                      raise ValueError(f"duplicate JSON key: {key}")
+                  result[key] = value
+              return result
+
+
+          def decode(raw: bytes, path: str) -> dict[str, object]:
+              try:
+                  value = json.loads(
+                      raw.decode("utf-8"),
+                      object_pairs_hook=unique_object,
+                      parse_constant=reject_constant,
+                  )
+              except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+                  raise SystemExit(f"strict JSON failure for {path}: {exc}") from exc
+              if not isinstance(value, dict):
+                  raise SystemExit(f"JSON root is not an object: {path}")
+              return value
+
+
+          def canonical_json_bytes(value: object) -> bytes:
+              return (
+                  json.dumps(
+                      value,
+                      ensure_ascii=False,
+                      indent=2,
+                      sort_keys=True,
+                      allow_nan=False,
+                  )
+                  + "\n"
+              ).encode("utf-8")
+
+
+          def canonical_digest(value: dict[str, object], field: str) -> str:
+              payload = copy.deepcopy(value)
+              payload.pop(field, None)
+              return digest(canonical_json_bytes(payload))
+
+
+          root = Path(os.environ["UPSTREAM_ROOT"]).resolve(strict=True)
+
+
+          def read_regular(relative: str) -> bytes:
+              if not relative or "\\" in relative or "\x00" in relative:
+                  raise SystemExit(f"unsafe upstream path: {relative!r}")
+              pure = PurePosixPath(relative)
+              if pure.is_absolute() or any(
+                  part in {"", ".", ".."} for part in relative.split("/")
+              ):
+                  raise SystemExit(f"unsafe upstream path: {relative!r}")
+              target = root.joinpath(*pure.parts)
+              if target.is_symlink() or not target.is_file():
+                  raise SystemExit(f"required regular file is missing: {relative}")
+              try:
+                  target.resolve(strict=True).relative_to(root)
+              except ValueError as exc:
+                  raise SystemExit(f"upstream path escapes checkout: {relative}") from exc
+              return target.read_bytes()
+
+
+          values: dict[str, dict[str, object]] = {}
+          for role, (path, byte_count, raw_sha256) in DOCUMENTS.items():
+              raw = read_regular(path)
+              if len(raw) != byte_count or digest(raw) != raw_sha256:
+                  raise SystemExit(f"exact M32 {role} byte identity mismatch")
+              if not raw.endswith(b"\n") or raw.endswith(b"\n\n"):
+                  raise SystemExit(f"M32 {role} terminal newline mismatch")
+              values[role] = decode(raw, path)
+
+          schema = values["schema"]
+          bundle = values["bundle"]
+          manifest = values["manifest"]
+          qualification = values["qualification"]
+
+          bundle_keys = {
+              "schema",
+              "version",
+              "milestone",
+              "kind",
+              "status",
+              "source_boundary",
+              "execution_contract",
+              "trace_count",
+              "source_tick_count",
+              "record_count",
+              "traces",
+              "bundle_digest_scope",
+              "bundle_sha256",
+          }
+          if (
+              schema.get("$schema")
+              != "https://json-schema.org/draft/2020-12/schema"
+              or schema.get("$id")
+              != (
+                  "https://frp.example/schemas/m32/"
+                  "frp.m32.deterministic_rtl_trace_bundle.v1.schema.json"
+              )
+              or schema.get("title") != "FRP M32 Deterministic RTL Trace Bundle"
+              or schema.get("type") != "object"
+              or schema.get("additionalProperties") is not False
+              or set(schema.get("required", [])) != bundle_keys
+              or schema.get("properties", {}).get("schema", {}).get("const")
+              != "frp.m32.deterministic_rtl_trace_bundle.v1"
+          ):
+              raise SystemExit("M32 formal schema boundary mismatch")
+
+          try:
+              jsonschema.Draft202012Validator.check_schema(schema)
+              jsonschema.Draft202012Validator(schema).validate(bundle)
+          except jsonschema.exceptions.ValidationError as exc:
+              raise SystemExit(f"M32 bundle schema validation failed: {exc.message}") from exc
+          except jsonschema.exceptions.SchemaError as exc:
+              raise SystemExit(f"M32 formal schema validation failed: {exc.message}") from exc
+
+          if set(bundle) != bundle_keys or (
+              bundle.get("schema")
+              != "frp.m32.deterministic_rtl_trace_bundle.v1"
+              or bundle.get("version") != "1.0.0"
+              or bundle.get("milestone") != "M32"
+              or bundle.get("kind") != "deterministic_rtl_trace_bundle"
+              or bundle.get("status") != "PASS"
+              or bundle.get("trace_count") != 2
+              or bundle.get("source_tick_count") != 33
+              or bundle.get("record_count") != 396
+              or bundle.get("bundle_digest_scope")
+              != "canonical_json_without_bundle_sha256"
+              or bundle.get("bundle_sha256") != PAYLOAD_DIGESTS["bundle_sha256"]
+              or canonical_digest(bundle, "bundle_sha256")
+              != PAYLOAD_DIGESTS["bundle_sha256"]
+          ):
+              raise SystemExit("M32 canonical bundle identity mismatch")
+
+          execution = bundle.get("execution_contract")
+          if not isinstance(execution, dict) or (
+              execution.get("canonical_ternary_domain") != [-1, 0, 1]
+              or execution.get("canonical_ternary_notation") != "-1/0/1"
+              or execution.get("opposite_polarity_routes")
+              != [[-1, 0, 1], [1, 0, -1]]
+              or execution.get("direct_opposite_transitions_allowed") is not False
+              or execution.get("route_legs_separately_observable") is not True
+              or execution.get("scheduler_modes") != ["7/1", "1/7"]
+              or execution.get("phase_derived_target_is_executed_state") is not False
+              or execution.get("registered_target_is_final_executed_state") is not False
+              or execution.get("phase_order_and_coherence_capacity_interchangeable")
+              is not False
+              or execution.get("packed_cell_order")
+              != "cell_0_least_significant"
+          ):
+              raise SystemExit("M32 execution contract mismatch")
+          roles = execution.get("active_zero_roles")
+          if not isinstance(roles, list) or len(roles) != 8:
+              raise SystemExit("M32 active-zero role inventory mismatch")
+
+          source_boundary = bundle.get("source_boundary")
+          if not isinstance(source_boundary, dict) or (
+              source_boundary.get("repository")
+              != "Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor"
+              or source_boundary.get("provenance_class")
+              != "upstream_frp_systemverilog_rtl"
+              or source_boundary.get("source_commit") != SOURCE_COMMIT
+              or source_boundary.get("source_identity_count") != 29
+              or source_boundary.get("transcript_identity_count") != 4
+              or source_boundary.get("workflow_name")
+              != "FRP M32 Registered Target Core"
+              or source_boundary.get("workflow_path")
+              != ".github/workflows/frp-m32-registered-target-boundary-workflow.yml"
+          ):
+              raise SystemExit("M32 source boundary mismatch")
+
+          source_identities = source_boundary.get("source_identities")
+          if (
+              not isinstance(source_identities, list)
+              or len(source_identities) != 29
+              or source_identities != manifest.get("source_identities")
+          ):
+              raise SystemExit("M32 source identity inventory mismatch")
+          source_paths: list[str] = []
+          for record in source_identities:
+              if not isinstance(record, dict) or set(record) != {
+                  "path",
+                  "byte_count",
+                  "raw_sha256",
+              }:
+                  raise SystemExit("M32 source identity record mismatch")
+              path = record.get("path")
+              if not isinstance(path, str):
+                  raise SystemExit("M32 source identity path mismatch")
+              raw = read_regular(path)
+              if (
+                  len(raw) != record.get("byte_count")
+                  or digest(raw) != record.get("raw_sha256")
+              ):
+                  raise SystemExit(f"M32 source identity mismatch: {path}")
+              source_paths.append(path)
+          if len(set(source_paths)) != 29:
+              raise SystemExit("M32 source identity paths are not unique")
+          source_groups = Counter(
+              "m31_rtl"
+              if path.startswith("rtl/m31/")
+              else "m32_rtl"
+              if path.startswith("rtl/m32/")
+              else "m32_formal"
+              if path.startswith("formal/m32/")
+              else "registered_workflow"
+              if path
+              == ".github/workflows/frp-m32-registered-target-boundary-workflow.yml"
+              else "unexpected"
+              for path in source_paths
+          )
+          if source_groups != {
+              "m31_rtl": 16,
+              "m32_rtl": 11,
+              "m32_formal": 1,
+              "registered_workflow": 1,
+          }:
+              raise SystemExit("M32 source identity group mismatch")
+
+          transcripts = source_boundary.get("transcript_identities")
+          if (
+              transcripts != TRANSCRIPT_IDENTITIES
+              or transcripts != manifest.get("transcript_identities")
+          ):
+              raise SystemExit("M32 transcript identity mismatch")
+
+          traces = bundle.get("traces")
+          if not isinstance(traces, list) or [
+              trace.get("scheduler_mode") for trace in traces
+          ] != ["7/1", "1/7"]:
+              raise SystemExit("M32 scheduler trace order mismatch")
+
+          code_to_value = {0: 0, 1: 1, 3: -1}
+          retained_domain: set[int] = set()
+          for trace in traces:
+              mode = trace["scheduler_mode"]
+              profile = TRACE_PROFILES[mode]
+              records = trace.get("records")
+              if not isinstance(records, list):
+                  raise SystemExit(f"M32 {mode} record inventory mismatch")
+              for field, expected in profile.items():
+                  if trace.get(field) != expected:
+                      raise SystemExit(f"M32 {mode} trace field mismatch: {field}")
+              if digest(canonical_json_bytes(records)) != profile["records_sha256"]:
+                  raise SystemExit(f"M32 {mode} record payload digest mismatch")
+              if len(records) != profile["source_tick_count"]:
+                  raise SystemExit(f"M32 {mode} source tick cardinality mismatch")
+
+              scheduler_states: Counter[str] = Counter()
+              first_route_coordinates: list[dict[str, int]] = []
+              second_route_coordinates: list[dict[str, int]] = []
+              active_zero_count = 0
+              previous_retained: dict[int, int] = {}
+
+              for tick, record in enumerate(records):
+                  if set(record) != {"source_tick", "sample", "bank", "cells", "requests"}:
+                      raise SystemExit(f"M32 {mode} record field inventory mismatch")
+                  if record.get("source_tick") != tick:
+                      raise SystemExit(f"M32 {mode} source tick sequence mismatch")
+                  sample = record.get("sample")
+                  bank = record.get("bank")
+                  cells = record.get("cells")
+                  requests = record.get("requests")
+                  if not isinstance(sample, dict) or not isinstance(bank, dict):
+                      raise SystemExit(f"M32 {mode} sample or bank mismatch")
+                  if not isinstance(cells, list) or len(cells) != 8:
+                      raise SystemExit(f"M32 {mode} cell cardinality mismatch")
+                  if not isinstance(requests, list) or len(requests) != 2:
+                      raise SystemExit(f"M32 {mode} request cardinality mismatch")
+                  if (
+                      sample.get("source_tick") != tick
+                      or bank.get("source_tick") != tick
+                      or sample.get("scheduler_mode") != mode
+                      or sample.get("scheduler_mode_code")
+                      != profile["scheduler_mode_code"]
+                      or sample.get("actual_direct_events") != 0
+                      or sample.get("reserved_state_events") != 0
+                      or sample.get("queue_overflow_events") != 0
+                      or sample.get("invariant_all_valid") is not True
+                      or sample.get("invariant_flags_hex") != "3ff"
+                      or sample.get("phase_target_domain_valid") is not True
+                      or sample.get("registered_target_domain_valid") is not True
+                  ):
+                      raise SystemExit(f"M32 {mode} sample invariant mismatch")
+                  scheduler_state = sample.get("scheduler_state")
+                  if not isinstance(scheduler_state, str):
+                      raise SystemExit(f"M32 {mode} scheduler state mismatch")
+                  scheduler_states[scheduler_state] += 1
+
+                  if [cell.get("source_cell") for cell in cells] != list(range(8)):
+                      raise SystemExit(f"M32 {mode} cell coordinate mismatch")
+                  if [request.get("request_lane") for request in requests] != [0, 1]:
+                      raise SystemExit(f"M32 {mode} request coordinate mismatch")
+
+                  for cell in cells:
+                      if cell.get("source_tick") != tick:
+                          raise SystemExit(f"M32 {mode} cell source tick mismatch")
+                      cell_index = cell["source_cell"]
+                      for prefix in (
+                          "source_target",
+                          "registered_target",
+                          "execution_target",
+                          "retained_state",
+                          "pending_target",
+                      ):
+                          code = cell.get(f"{prefix}_code")
+                          value = cell.get(f"{prefix}_value")
+                          if code not in code_to_value or code_to_value[code] != value:
+                              raise SystemExit(
+                                  f"M32 {mode} ternary pair mismatch: {prefix}"
+                              )
+                      retained = cell["retained_state_value"]
+                      retained_domain.add(retained)
+                      if cell.get("active_zero") is not (retained == 0):
+                          raise SystemExit(f"M32 {mode} active-zero marker mismatch")
+                      active_zero_count += int(cell["active_zero"])
+                      previous = previous_retained.get(cell_index)
+                      if previous in {-1, 1} and retained == -previous:
+                          raise SystemExit(f"M32 {mode} direct opposite transition")
+                      previous_retained[cell_index] = retained
+                      coordinate = {
+                          "source_tick": tick,
+                          "source_cell": cell_index,
+                      }
+                      if cell.get("first_route_leg") is True:
+                          first_route_coordinates.append(coordinate)
+                      if cell.get("second_route_leg") is True:
+                          second_route_coordinates.append(coordinate)
+
+                  for request in requests:
+                      if request.get("source_tick") != tick:
+                          raise SystemExit(f"M32 {mode} request source tick mismatch")
+                      for prefix in ("phase_target", "execution_target"):
+                          code = request.get(f"{prefix}_code")
+                          value = request.get(f"{prefix}_value")
+                          if code not in code_to_value or code_to_value[code] != value:
+                              raise SystemExit(
+                                  f"M32 {mode} request ternary pair mismatch: {prefix}"
+                              )
+
+              if dict(scheduler_states) != profile["scheduler_state_counts"]:
+                  raise SystemExit(f"M32 {mode} scheduler cadence mismatch")
+              if active_zero_count != profile["active_zero_cell_observation_count"]:
+                  raise SystemExit(f"M32 {mode} active-zero count mismatch")
+              if first_route_coordinates != profile["first_route_leg_coordinates"]:
+                  raise SystemExit(f"M32 {mode} first route leg mismatch")
+              if second_route_coordinates != profile["second_route_leg_coordinates"]:
+                  raise SystemExit(f"M32 {mode} second route leg mismatch")
+
+          if retained_domain != {-1, 0, 1}:
+              raise SystemExit("M32 retained ternary domain mismatch")
+
+          def entry(role: str) -> dict[str, object]:
+              path, byte_count, raw_sha256 = DOCUMENTS[role]
+              return {
+                  "byte_count": byte_count,
+                  "path": path,
+                  "raw_sha256": raw_sha256,
+              }
+
+          manifest_keys = {
+              "schema",
+              "version",
+              "milestone",
+              "kind",
+              "status",
+              "source_commit",
+              "generated_file_count",
+              "generated_files",
+              "source_identity_count",
+              "source_identities",
+              "transcript_identity_count",
+              "transcript_identities",
+              "manifest_digest_scope",
+              "manifest_sha256",
+          }
+          if set(manifest) != manifest_keys or (
+              manifest.get("schema")
+              != "frp.m32.deterministic_rtl_trace_manifest.v1"
+              or manifest.get("version") != "1.0.0"
+              or manifest.get("milestone") != "M32"
+              or manifest.get("kind") != "deterministic_rtl_trace_manifest"
+              or manifest.get("status") != "PASS"
+              or manifest.get("source_commit") != SOURCE_COMMIT
+              or manifest.get("generated_file_count") != 2
+              or manifest.get("generated_files")
+              != [entry("schema"), entry("bundle")]
+              or manifest.get("source_identity_count") != 29
+              or manifest.get("transcript_identity_count") != 4
+              or manifest.get("manifest_digest_scope")
+              != "canonical_json_without_manifest_sha256"
+              or manifest.get("manifest_sha256")
+              != PAYLOAD_DIGESTS["manifest_sha256"]
+              or canonical_digest(manifest, "manifest_sha256")
+              != PAYLOAD_DIGESTS["manifest_sha256"]
+          ):
+              raise SystemExit("M32 manifest boundary mismatch")
+
+          qualification_keys = {
+              "schema",
+              "version",
+              "milestone",
+              "kind",
+              "status",
+              "source_commit",
+              "check_count",
+              "passed_count",
+              "failed_count",
+              "checks",
+              "qualified_artifact_count",
+              "qualified_artifacts",
+              "qualification_digest_scope",
+              "qualification_sha256",
+          }
+          checks = qualification.get("checks")
+          if set(qualification) != qualification_keys or (
+              qualification.get("schema")
+              != "frp.m32.deterministic_rtl_trace_qualification.v1"
+              or qualification.get("version") != "1.0.0"
+              or qualification.get("milestone") != "M32"
+              or qualification.get("kind")
+              != "deterministic_rtl_trace_qualification"
+              or qualification.get("status") != "PASS"
+              or qualification.get("source_commit") != SOURCE_COMMIT
+              or qualification.get("check_count") != 38
+              or qualification.get("passed_count") != 38
+              or qualification.get("failed_count") != 0
+              or not isinstance(checks, list)
+              or [check.get("check_id") for check in checks]
+              != QUALIFICATION_CHECK_IDS
+              or any(check != {"check_id": check["check_id"], "status": "PASS"}
+                     for check in checks)
+              or qualification.get("qualified_artifact_count") != 3
+              or qualification.get("qualified_artifacts")
+              != [entry("schema"), entry("bundle"), entry("manifest")]
+              or qualification.get("qualification_digest_scope")
+              != "canonical_json_without_qualification_sha256"
+              or qualification.get("qualification_sha256")
+              != PAYLOAD_DIGESTS["qualification_sha256"]
+              or canonical_digest(qualification, "qualification_sha256")
+              != PAYLOAD_DIGESTS["qualification_sha256"]
+          ):
+              raise SystemExit("M32 qualification boundary mismatch")
+
+          print("Exact FRP M32 published boundary: PASS")
+          print("published_documents=4")
+          print("source_identities=29")
+          print("transcript_identities=4")
+          print("scheduler_modes=7/1,1/7")
+          print("source_ticks=33")
+          print("structured_trace_records=396")
+          print("active_zero_cell_observations=238")
+          print("balanced_ternary_notation=-1/0/1")
+          print("opposite_transition_routes=-1/0/1,1/0/-1")
+          print("direct_opposite_transitions=0")
+          print("reserved_state_events=0")
+          print("queue_overflow_events=0")
+          print("upstream_direction=read_only")
+          PY
+
+      - name: Run complete Observatory regression
+        working-directory: observatory
+        shell: bash
+        env:
+          FRP_M30_ARCHIVE_PATH: >-
+            ../upstream/artifacts/m30/packages/frp-v3.2.0-m30-archival-release.tar.gz
+          FRP_M31_UPSTREAM_ROOT: ../upstream
+          PYTHONDONTWRITEBYTECODE: "1"
+          PYTHONHASHSEED: "0"
+        run: |
+          set -euo pipefail
+          export PYTHONPYCACHEPREFIX="$RUNNER_TEMP/frp-observatory-m23-pycache"
+          python -m compileall -q \
+            artifact_auditor \
+            parsers \
+            schemas \
+            trace_explorer \
+            transition_visualizer \
+            tests
+          python -m unittest discover \
+            -s tests \
+            -p 'test_*.py' \
+            -v 2>&1 \
+            | tee "$RUNNER_TEMP/frp-observatory-m23-full-tests.txt"
+          grep -F "Ran 655 tests" \
+            "$RUNNER_TEMP/frp-observatory-m23-full-tests.txt"
+          grep -E '^OK( \(skipped=[0-9]+\))?$' \
+            "$RUNNER_TEMP/frp-observatory-m23-full-tests.txt"
+
+      - name: Prove both repository checkouts remain unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -C observatory diff --exit-code
+          git -C observatory diff --cached --exit-code
+          test -z "$(git -C observatory status --porcelain)"
+          git -C upstream diff --exit-code
+          git -C upstream diff --cached --exit-code
+          test -z "$(git -C upstream status --porcelain)"
+          printf '%s\n' "Observatory and FRP source trees remain unchanged."
+
+      - name: Publish M23 summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## FRP Observatory M23 M32 Published Boundary Intake"
+            echo
+            echo "| Boundary | Result |"
+            echo "|---|---|"
+            echo "| Trigger | manual main only |"
+            echo "| M32 publication documents | 4 exact files |"
+            echo "| M32 source identities | 29 exact files |"
+            echo "| M32 transcript identities | 4 exact records |"
+            echo "| M32 scheduler modes | 7/1 and 1/7 |"
+            echo "| M32 source ticks | 33 |"
+            echo "| M32 structured trace records | 396 |"
+            echo "| M32 active-zero cell observations | 238 |"
+            echo "| M32 qualification checks | 38/38 PASS |"
+            echo "| Observatory regression | 655 tests |"
+            echo "| FRP mutation | forbidden |"
+            echo "| Observatory writeback | forbidden |"
+            echo "| Job status | ${JOB_STATUS} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
+        env:
+          JOB_STATUS: ${{ job.status }}
