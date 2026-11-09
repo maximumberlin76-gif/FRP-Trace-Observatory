@@ -1,0 +1,103 @@
+name: FRP Observatory M26 - M32 revision intake
+
+on: workflow_dispatch
+
+permissions:
+  contents: read
+
+env:
+  FRP_PUBLICATION: '874dbb954f690e405e8ce702ae3b40ea5a77d078'
+
+jobs:
+  qualify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: observatory
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - uses: actions/checkout@v4
+        with:
+          repository: maximumberlin76-gif/Fractal-Resonance-Processor-FRP-Ternary-Resonant-Coherence-Processor
+          ref: ${{ env.FRP_PUBLICATION }}
+          fetch-depth: 0
+          path: frp
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify the publication and run the Observatory suite
+        working-directory: observatory
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ../evidence
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git -C ../frp rev-parse HEAD)" = "$FRP_PUBLICATION"
+          printf '%s\n' "$GITHUB_SHA" > ../evidence/observatory-commit.txt
+          python --version > ../evidence/python-version.txt
+          python -m artifact_auditor.m32_revision_intake \
+            --upstream-root ../frp --publication-commit "$FRP_PUBLICATION" \
+            > ../evidence/intake.json 2> ../evidence/intake-errors.log
+          python - <<'PY'
+          import json
+          import os
+          import unittest
+          from pathlib import Path
+          from artifact_auditor.m32_revision_intake import m32_revision_tree
+
+          evidence = Path("../evidence")
+          repo = Path("../frp").resolve()
+          sha = os.environ["FRP_PUBLICATION"]
+          report = json.loads((evidence / "intake.json").read_text())
+          expected = {
+              "publication_commit": sha,
+              "source_commit": "c0bc0fbc2c1c2e500b19d0ba84b3431a813e3941",
+              "bundle_sha256": "62d8c1e6d205b9262a5c950883d3259275d5049f7a896ae12956a210cb75b7e0",
+              "source_files": 29, "active_zero_observations": 238,
+              "direct_opposite_transitions": 0, "reserved_state_events": 0,
+              "queue_overflow_events": 0,
+          }
+          for key, value in expected.items():
+              if report[key] != value:
+                  raise SystemExit(f"{key}: expected {value}, got {report[key]}")
+          modes = sorted((t["scheduler_mode"], t["source_tick_count"], t["record_count"])
+                         for t in report["traces"])
+          if modes != [("1/7", 17, 204), ("7/1", 16, 192)]:
+              raise SystemExit(f"Unexpected M32 scheduler traces: {modes}")
+
+          archive = repo / "artifacts/m30/packages/frp-v3.2.0-m30-archival-release.tar.gz"
+          with m32_revision_tree(repo, sha) as tree:
+              os.environ.update(FRP_M32_UPSTREAM_ROOT=str(tree),
+                                FRP_M31_UPSTREAM_ROOT=str(repo),
+                                FRP_M30_ARCHIVE_PATH=str(archive))
+              suite = unittest.defaultTestLoader.discover("tests")
+              with (evidence / "tests.log").open("w") as log:
+                  result = unittest.TextTestRunner(stream=log, verbosity=2).run(suite)
+          stats = dict(tests=result.testsRun, skipped=len(result.skipped),
+                       failures=len(result.failures), errors=len(result.errors),
+                       expected_failures=len(result.expectedFailures),
+                       unexpected_successes=len(result.unexpectedSuccesses))
+          print(json.dumps(stats))
+          (evidence / "tests.json").write_text(json.dumps(stats, indent=2) + "\n")
+          if result.testsRun < 678 or any(v for k, v in stats.items() if k != "tests"):
+              raise SystemExit("Observatory suite incomplete; see tests.log")
+          PY
+
+      - name: Hash the evidence files
+        if: ${{ always() && hashFiles('evidence/*') != '' }}
+        working-directory: evidence
+        run: sha256sum -- * > SHA256SUMS
+
+      - name: Upload one evidence artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frp-observatory-m26-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/
+          if-no-files-found: error
