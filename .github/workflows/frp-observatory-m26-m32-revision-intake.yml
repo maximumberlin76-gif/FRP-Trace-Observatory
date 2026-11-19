@@ -6,7 +6,7 @@ permissions:
   contents: read
 
 env:
-  FRP_PUBLICATION: '874dbb954f690e405e8ce702ae3b40ea5a77d078'
+  FRP_PUBLICATION: '1eaca5c65c771dea750a1c2b772e559ca2c5e3b2'
 
 jobs:
   qualify:
@@ -40,6 +40,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           test "$(git -C ../frp rev-parse HEAD)" = "$FRP_PUBLICATION"
           printf '%s\n' "$GITHUB_SHA" > ../evidence/observatory-commit.txt
+          printf '%s\n' "$FRP_PUBLICATION" > ../evidence/frp-commit.txt
           python --version > ../evidence/python-version.txt
           python -m artifact_auditor.m32_revision_intake \
             --upstream-root ../frp --publication-commit "$FRP_PUBLICATION" \
@@ -76,7 +77,22 @@ jobs:
               os.environ.update(FRP_M32_UPSTREAM_ROOT=str(tree),
                                 FRP_M31_UPSTREAM_ROOT=str(repo),
                                 FRP_M30_ARCHIVE_PATH=str(archive))
-              suite = unittest.defaultTestLoader.discover("tests")
+              loader = unittest.TestLoader()
+              suite = loader.discover("tests")
+
+              def test_ids(items):
+                  for item in items:
+                      if isinstance(item, unittest.TestSuite):
+                          yield from test_ids(item)
+                      else:
+                          yield item.id()
+
+              identifiers = list(test_ids(suite))
+              (evidence / "test-inventory.json").write_text(
+                  json.dumps(identifiers, indent=2) + "\n"
+              )
+              if loader.errors or len(identifiers) != 691 or len(set(identifiers)) != 691:
+                  raise SystemExit("Expected exactly 691 unique Observatory tests")
               with (evidence / "tests.log").open("w") as log:
                   result = unittest.TextTestRunner(stream=log, verbosity=2).run(suite)
           stats = dict(tests=result.testsRun, skipped=len(result.skipped),
@@ -85,7 +101,7 @@ jobs:
                        unexpected_successes=len(result.unexpectedSuccesses))
           print(json.dumps(stats))
           (evidence / "tests.json").write_text(json.dumps(stats, indent=2) + "\n")
-          if result.testsRun < 678 or any(v for k, v in stats.items() if k != "tests"):
+          if result.testsRun != 691 or any(v for k, v in stats.items() if k != "tests"):
               raise SystemExit("Observatory suite incomplete; see tests.log")
           PY
 
