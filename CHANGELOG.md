@@ -1,23 +1,48 @@
-
 # Changelog
 
 All notable completed changes to FRP Trace Observatory are recorded in this
 file.
 
-- **Current implementation boundary:** Observatory M22
-- **Current qualified upstream boundary:** FRP M31
-- **Current release metadata:** 1.0.3
-- **Current version DOI:** [10.5281/zenodo.22537600](https://doi.org/10.5281/zenodo.22537600)
+- **Current implementation boundary:** Observatory M26
+- **Current qualified upstream boundary:** FRP M32
+- **Current release:** 1.1.0 (2026-11-20)
+- **Current version DOI:** [10.5281/zenodo.24393615](https://doi.org/10.5281/zenodo.24393615)
 - **Concept DOI:** [10.5281/zenodo.22537599](https://doi.org/10.5281/zenodo.22537599)
 - **Terminal M30 qualification:** Observatory M8B
 - **Terminal M31 qualification:** Observatory M22
-- **Current complete verification:** 655 tests, `OK`
+- **M32 qualification:** Observatory M26
+- **Complete M26 test suite:** 691/691 passed, zero skips
 - **Canonical repository:** [FRP Trace Observatory](https://github.com/maximumberlin76-gif/FRP-Trace-Observatory)
 
 This changelog records completed repository state by qualification boundary.
 Exact file history and commit ordering remain available in the Git history.
-Exact implementation-stage ordering is recorded in
-[docs/milestones.md](docs/milestones.md).
+For M1–M22, see [milestones](docs/milestones.md). For M32 qualification,
+see the [1.1.0 release notes](RELEASE_NOTES_v1_1_0.md).
+
+## Version 1.1.0 — M32 Trace Qualification
+
+Published on 2026-11-20. Zenodo archived GitHub tag `1.1.0` at Observatory
+commit `a22dabd`. [Zenodo record](https://doi.org/10.5281/zenodo.24393615)
+
+- The Artifact Auditor reads the M32 schema, trace bundle, manifest and
+  qualification report from FRP commit `1eaca5c65c771dea750a1c2b772e559ca2c5e3b2`.
+  It checks 29 source files against the revision recorded in the manifest.
+  [Upstream FRP 3.4.0-rc.2](https://doi.org/10.5281/zenodo.24392460)
+- The M32 registry routes all four documents to the auditor and the trace
+  bundle to both viewing tools. Trace Explorer selects records by scheduler
+  mode and source tick. The Ternary Transition Visualizer shows each selected
+  cell's retained state, pending target and route through active zero.
+- All 691 discovered tests passed at Observatory commit `185417190701ada0c177671302d8e8341d5e052f`
+  on Python 3.12.16, with zero skips, failures, errors, expected failures or
+  unexpected successes. [M26 run 44696283039, attempt 1](https://github.com/maximumberlin76-gif/FRP-Trace-Observatory/actions/runs/44696283039/attempts/1)
+- The two eight-cell traces contain 396 monitor records across 33 source
+  ticks. Active zero occurs in 238 of 264 cell observations. In both
+  scheduler modes, `7/1` and `1/7`, cell 0 retains its pending target
+  `−1` at zero and completes `+1 → 0 → −1`. The auditor recorded zero
+  direct opposite transitions, reserved-state events or queue overflows.
+
+After publication, commit `3ba158b` recorded the version DOI and release
+date in [CITATION.cff](CITATION.cff).
 
 ## Version 1.0.3 — Zenodo-Archived Release
 
@@ -513,7 +538,7 @@ Later qualification stages compose these boundaries and do not replace their
 source evidence, deterministic identities, tests, workflows, or historical
 records.
 
-## Current Acceptance Identities
+## M30 and M31 Acceptance Identities
 
 | Boundary | SHA-256 |
 |---|---|
@@ -525,7 +550,7 @@ records.
 | M31 trace dataset | `ef5a040c9d30d02f90003e007e447cf0d66238f31ed27e3be92bdce31ad19fff` |
 | M31 visualizer dataset | `0ad87af2486798918a86a8a9fababdb45cb2b633c0f66e7c9b80b590ca8ed304` |
 
-## Current Qualification Result
+## Historical M22 Qualification Result (M30 and M31)
 
 With the exact M30 archive and clean M31 upstream repository configured:
 
