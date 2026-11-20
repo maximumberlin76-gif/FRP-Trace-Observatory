@@ -6,12 +6,12 @@ FRP Trace Observatory reads published [Fractal Resonance Processor (FRP)](https:
 
 | Scope | Evidence |
 |---|---|
-| Observatory M26 on `main` | [Run 42709869404, attempt 1](https://github.com/maximumberlin76-gif/FRP-Trace-Observatory/actions/runs/42709869404/attempts/1) at `1cb3feb6f78ce319ff3257a1c2fcab49eaf25da6`. Python 3.12, 691 tests passed, zero skips, failures or errors. |
+| Observatory M26 / FRP v3.4.0-rc.2 candidate | [Run 44696283039, attempt 1](https://github.com/maximumberlin76-gif/FRP-Trace-Observatory/actions/runs/44696283039/attempts/1) at `185417190701ada0c177671302d8e8341d5e052f`. Python 3.12.16. All 691 discovered tests passed. Skips, failures, errors, expected failures and unexpected successes were all zero. |
 | Archived Observatory release | [v1.0.3](https://github.com/maximumberlin76-gif/FRP-Trace-Observatory/releases/tag/v1.0.3), Observatory M22 over FRP M31, including the M30 evidence chain. The release suite passed 655 tests. |
 
 ## M32 publication and trace data
 
-M26 reads the formal schema, trace bundle, manifest and qualification document from FRP publication commit `874dbb954f690e405e8ce702ae3b40ea5a77d078`. It reads the 29 source files from the commit recorded in that manifest, `c0bc0fbc2c1c2e500b19d0ba84b3431a813e3941`. The raw trace bundle SHA-256 is `62d8c1e6d205b9262a5c950883d3259275d5049f7a896ae12956a210cb75b7e0`.
+M26 reads the formal schema, trace bundle, manifest and qualification document from FRP publication commit `1eaca5c65c771dea750a1c2b772e559ca2c5e3b2`. It reads the 29 source files from the commit recorded in that manifest, `c0bc0fbc2c1c2e500b19d0ba84b3431a813e3941`. The raw trace bundle SHA-256 is `62d8c1e6d205b9262a5c950883d3259275d5049f7a896ae12956a210cb75b7e0`.
 
 The M32 publication registry routes all four documents to the auditor and the trace bundle to both viewing modes. Each source tick in this eight-cell publication contains one sample, one bank record, two request records and eight cell records.
 
@@ -20,18 +20,18 @@ The M32 publication registry routes all four documents to the auditor and the tr
 | `7/1` | 0–15 | 192 | 128 | Tick 9 | Tick 15 |
 | `1/7` | 0–16 | 204 | 136 | Tick 10 | Tick 16 |
 
-Across both traces, 238 of 264 cell observations carry `active_zero`. In each mode, cell 0 takes the route `+1 → 0 → −1`, retaining a pending target of `−1` at active zero until the second leg. The published trace reports zero direct opposite transitions, reserved-state events and queue overflow events.
+Across 33 source ticks and 396 monitor records, 238 of 264 cell observations carry `active_zero`. In each mode, cell 0 takes the route `+1 → 0 → −1`, retaining a pending target of `−1` at active zero until the second leg. The published trace reports zero direct opposite transitions, reserved-state events and queue overflow events.
 
 ## Reproduce M26
 
-Open the [manual M26 workflow](.github/workflows/frp-observatory-m26-m32-revision-intake.yml) in Actions, select the branch and choose **Run workflow**. The artifact includes the Observatory commit, Python version, intake report, intake error log, test counts, verbose test log and a SHA-256 manifest. From the extracted artifact directory, run:
+Open the [manual M26 workflow](.github/workflows/frp-observatory-m26-m32-revision-intake.yml) in Actions, select the branch and choose **Run workflow**. The ZIP archive for run 44696283039, attempt 1, has SHA-256 `79aaae12fa95653fb69294c70fcf6efbc7eaab0d1429f6d873122bc963158e0f`. The archive records both commit IDs, the Python version, the intake report and its error log, the test inventory, the counts and the verbose test log. `SHA256SUMS` covers all eight files. Verify the extracted files with the following command.
 
     sha256sum -c SHA256SUMS
 
 To inspect M32 locally, use Python 3.12 and Git. Run the following commands from the Observatory repository root with an FRP checkout at `../frp` containing both commits above.
 
     export FRP_ROOT=../frp
-    export FRP_PUBLICATION=874dbb954f690e405e8ce702ae3b40ea5a77d078
+    export FRP_PUBLICATION=1eaca5c65c771dea750a1c2b772e559ca2c5e3b2
 
     python -m artifact_auditor.m32_revision_intake \
       --upstream-root "$FRP_ROOT" --publication-commit "$FRP_PUBLICATION"
@@ -47,7 +47,7 @@ To inspect M32 locally, use Python 3.12 and Git. Run the following commands from
       --upstream-root "$FRP_ROOT" --publication-commit "$FRP_PUBLICATION" \
       --scheduler-mode 1/7 --source-cell 0
 
-Omit `--source-tick` to read the entire selected trace. The cell timeline includes the previous and current retained states, active zero, pending status and target, and both route-leg flags. At the first observation the previous retained state is JSON `null`; retained state `0` denotes an observed processor state.
+Omit `--source-tick` to read the entire selected trace. The cell timeline includes the previous and current retained states, active zero, pending status and target, and both route-leg flags. At the first observation the previous retained state is JSON `null`. Retained state `0` denotes an observed processor state.
 
 The [routine CI workflow](.github/workflows/observatory-ci.yml) compiles the Python modules and runs repository test discovery. M26 configures the external M30 archive, the M31 publication and the M32 source and publication revisions for the complete suite.
 
@@ -55,6 +55,7 @@ The [routine CI workflow](.github/workflows/observatory-ci.yml) compiles the Pyt
 
 | Boundary | Qualified result | Reference |
 |---|---|---|
+| M32 / Observatory M26 | 691 tests passed at Observatory `1cb3feb6` using FRP publication `874dbb95`. | [Run 42709869404, attempt 1](https://github.com/maximumberlin76-gif/FRP-Trace-Observatory/actions/runs/42709869404/attempts/1) |
 | M31 / Observatory M22 | 4 documents, 6 routes, 47 audit checks, 100 trace records and 800 transition frames. The 26 focused tests passed. | [M31 published boundary](docs/m31_published_boundary.md) |
 | M30 / Observatory M8B | 519 archive entries, 518 manifested members, 7 registry routes and 69 audit checks. | [M8B workflow](.github/workflows/frp-observatory-m8b-full-core-transition-visualizer-qualification-workflow.yml) |
 
